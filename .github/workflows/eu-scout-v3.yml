@@ -1,0 +1,60 @@
+name: EU Scout V3 Quality Gate
+
+on:
+  push:
+    branches:
+      - 'redesign/eu-scout-next-v3'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eu-scout-v3-quality
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install app
+        run: npm install --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Install Playwright smoke dependency
+        run: npm install --no-save --no-audit --no-fund playwright
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start Next.js locally
+        shell: bash
+        run: |
+          npm start -- -p 4173 > /tmp/eu-scout-v3.log 2>&1 &
+          echo $! > /tmp/eu-scout-v3.pid
+          for i in {1..45}; do
+            if curl -fsS http://127.0.0.1:4173 >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/eu-scout-v3.log
+          exit 1
+      - name: Browser acceptance smoke
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node scripts/v3-browser-smoke.mjs
+      - name: Upload V3 visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eu-scout-v3-artifacts
+          path: |
+            v3-artifacts/*.png
+            /tmp/eu-scout-v3.log
+          if-no-files-found: warn
+          retention-days: 7

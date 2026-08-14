@@ -1,0 +1,34 @@
+name: Publish NHMA UI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - .github/workflows/publish-nhma.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nhma-ui-production
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Publish current GitHub UI to runtime artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error \
+            --retry 3 --retry-all-errors \
+            -X POST \
+            -H 'content-type: application/json' \
+            --data '{}' \
+            'https://bgvgstpoypqbjnemqcqp.supabase.co/functions/v1/nhma-publish-ui'
+          echo
+          echo 'NHMA UI published.'

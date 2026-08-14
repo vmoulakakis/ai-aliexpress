@@ -1,0 +1,28 @@
+name: NHMA V2 Quality Gate
+
+on:
+  push:
+    branches:
+      - 'research/**'
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'skills/**'
+      - 'evals/**'
+      - 'scripts/**'
+      - 'docs/**'
+
+permissions:
+  contents: read
+
+jobs:
+  static-release-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate v2 UI and regression suite
+        run: node scripts/validate-v2.mjs

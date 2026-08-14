@@ -1,0 +1,72 @@
+[
+  {
+    "id": "office-chair-budget",
+    "turns": ["Θέλω εργονομική καρέκλα γραφείου μέχρι 180 ευρώ"],
+    "expect": {"productFamilyContains": ["chair", "office"], "budgetMax": 180, "forbidTitlePatterns": ["footrest", "cushion", "lumbar pad", "seat cover", "saddle", "stool", "caster", "gas lift"], "maxProductPrice": 180}
+  },
+  {
+    "id": "laptop-memory",
+    "turns": ["Laptop για τον γιο μου 12 χρονών", "για coding μέχρι 600 ευρώ", "να είναι πιο ελαφρύ"],
+    "expect": {"productFamilyContains": ["laptop"], "budgetMax": 600, "stateContains": ["coding", "lightweight"], "forbidTitlePatterns": ["sleeve", "case", "stand", "charger", "cooling pad"]}
+  },
+  {
+    "id": "school-need-decomposition",
+    "turns": ["Ο γιος μου πάει Β Γυμνασίου, τι να του πάρω;"],
+    "expect": {"mustNotEndAsUnknown": true, "mayClarify": true, "maxClarifications": 1}
+  },
+  {
+    "id": "specific-pencil-case",
+    "turns": ["Χρειάζομαι απλή κασετίνα με ένα άνοιγμα"],
+    "expect": {"productFamilyContains": ["pencil case"], "mustNotGeneralizeTo": ["study accessory", "school accessory"]}
+  },
+  {
+    "id": "robot-vacuum-pet-hair",
+    "turns": ["Θέλω ρομποτική σκούπα για τρίχες σκύλου μέχρι 250 ευρώ"],
+    "expect": {"productFamilyContains": ["robot", "vacuum"], "budgetMax": 250, "forbidTitlePatterns": ["hook", "pool", "window", "filter", "brush", "replacement", "mop pad", "spare part"], "maxProductPrice": 250, "zeroResultsAllowed": true}
+  },
+  {
+    "id": "power-bank-flight",
+    "turns": ["Power bank για αεροπλάνο μέχρι 30 ευρώ"],
+    "expect": {"productFamilyContains": ["power bank"], "budgetMax": 30, "forbidUnsupportedClaims": ["airline approved", "flight safe", "TSA approved"]}
+  },
+  {
+    "id": "strict-eu-stock",
+    "turns": ["Θέλω ασύρματα ακουστικά μέχρι 60 ευρώ μόνο από αποθήκη ΕΕ"],
+    "expect": {"budgetMax": 60, "hardConstraintsContain": ["EU warehouse"], "unknownEuStockMayNotBePresentedAsVerified": true}
+  },
+  {
+    "id": "strict-free-shipping",
+    "turns": ["Θέλω webcam μέχρι 50 ευρώ και τα μεταφορικά πρέπει να είναι δωρεάν"],
+    "expect": {"budgetMax": 50, "hardConstraintsContain": ["free shipping"], "knownPaidShippingMustBeRejected": true}
+  },
+  {
+    "id": "followup-cheaper",
+    "turns": ["Θέλω εργονομικό mouse για πολλές ώρες δουλειάς", "δείξε μου πιο φθηνά"],
+    "expect": {"preserveProductFamily": true, "followupMustNotResetIntent": true}
+  },
+  {
+    "id": "followup-second-faster",
+    "turns": ["Βρες μου 3 backpack για ταξίδι μέχρι 70 ευρώ", "το δεύτερο αλλά με πιο γρήγορη παράδοση"],
+    "expect": {"preserveProductFamily": true, "mustResolvePriorReference": "second", "mustNotInventDelivery": true}
+  },
+  {
+    "id": "greeklish-typos",
+    "turns": ["uelv ena kalό powerbank gia iphone mexri 35e kai na einai mikro"],
+    "expect": {"productFamilyContains": ["power bank"], "budgetMax": 35, "stateContains": ["compact"]}
+  },
+  {
+    "id": "photo-fallback",
+    "turns": ["[image: product photo] βρες μου ίδιο ή παρόμοιο"],
+    "expect": {"whenDirectImageSearchUnavailable": "ask-minimal-text-identifier", "mustNotClaimVisualSimilarityFromKeywordOnly": true}
+  },
+  {
+    "id": "chat-no-search",
+    "turns": ["Ποια είναι η διαφορά ανάμεσα σε μηχανικό και membrane keyboard;"],
+    "expect": {"productSearchRequired": false}
+  },
+  {
+    "id": "soft-relaxation-only",
+    "turns": ["Θέλω μαύρο laptop stand μέχρι 20 ευρώ, προτιμώ αλουμίνιο"],
+    "expect": {"budgetMax": 20, "onZeroResultsMayRelax": ["material preference"], "mustNotRelaxWithoutPermission": ["budgetMax", "product family"]}
+  }
+]

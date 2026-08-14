@@ -33,7 +33,17 @@ try {
   const productCount = await desktop.locator(".product-card").count();
   const noResultCount = await desktop.locator(".no-results").count();
   if (productCount === 0 && noResultCount === 0) throw new Error("Search produced neither products nor safe no-result state");
-  if (productCount > 0) await desktop.locator(".query-translation").waitFor({ timeout: 10000 });
+
+  let proxiedImages = 0;
+  if (productCount > 0) {
+    await desktop.locator(".query-translation").waitFor({ timeout: 10000 });
+    await desktop.waitForFunction(() => {
+      const first = document.querySelector(".product-card img");
+      return first instanceof HTMLImageElement && first.complete && first.naturalWidth > 40;
+    }, undefined, { timeout: 20000 });
+    proxiedImages = await desktop.locator('.product-card img[src^="/api/image?"]').count();
+    if (proxiedImages === 0) throw new Error("AliExpress product media did not route through the same-origin proxy");
+  }
   await desktop.screenshot({ path: "v3-artifacts/search-desktop.png", fullPage: true });
 
   // Back-to-school demand family flow: one click must compose context and start live search.
@@ -64,6 +74,10 @@ try {
     const box = await first.boundingBox();
     const parent = await desktop.locator(".mini-products.vertical").first().boundingBox();
     if (!box || !parent || box.width < parent.width * 0.8) throw new Error("Chat product card is not vertically stacked/full width");
+    await desktop.waitForFunction(() => {
+      const image = document.querySelector(".mini-products.vertical img");
+      return !(image instanceof HTMLImageElement) || (image.complete && image.naturalWidth > 20);
+    }, undefined, { timeout: 15000 });
   }
   await desktop.screenshot({ path: "v3-artifacts/chat-desktop.png", fullPage: true });
 
@@ -74,7 +88,7 @@ try {
   if (overflow) throw new Error("Horizontal overflow detected on mobile");
   await mobile.screenshot({ path: "v3-artifacts/home-mobile.png", fullPage: true });
 
-  console.log(JSON.stringify({ ok: true, health: health.body, productCount, noResultCount, miniCards }, null, 2));
+  console.log(JSON.stringify({ ok: true, health: health.body, productCount, noResultCount, proxiedImages, miniCards }, null, 2));
 } finally {
   await browser.close();
 }

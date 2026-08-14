@@ -1,0 +1,54 @@
+import { chromium } from "playwright";
+import fs from "node:fs/promises";
+
+const base = process.env.BASE_URL || "http://127.0.0.1:4173";
+await fs.mkdir("v3-artifacts", { recursive: true });
+
+const browser = await chromium.launch({ headless: true });
+try {
+  const desktop = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
+  await desktop.goto(base, { waitUntil: "networkidle", timeout: 45000 });
+  await desktop.getByText("EU Scout", { exact: true }).first().waitFor();
+  await desktop.getByText("Έξυπνη Αναζήτηση", { exact: true }).waitFor();
+  await desktop.screenshot({ path: "v3-artifacts/home-desktop.png", fullPage: true });
+
+  const input = desktop.locator(".search-box textarea");
+  await input.fill("εργονομική καρέκλα γραφείου μέχρι 180 ευρώ");
+  await desktop.getByRole("button", { name: /Έξυπνη αναζήτηση/i }).click();
+  await desktop.locator(".results-section.visible").waitFor({ timeout: 45000 });
+  await desktop.locator(".query-translation").waitFor({ timeout: 45000 });
+  const productCount = await desktop.locator(".product-card").count();
+  const noResultCount = await desktop.locator(".no-results").count();
+  if (productCount === 0 && noResultCount === 0) throw new Error("Search produced neither products nor safe no-result state");
+  await desktop.screenshot({ path: "v3-artifacts/search-desktop.png", fullPage: true });
+
+  await desktop.locator(".chat-fab").click();
+  await desktop.locator(".chat-panel").waitFor();
+  const chatInput = desktop.locator(".chat-compose textarea");
+  await chatInput.fill("Θέλω σχολική τσάντα για Β Γυμνασίου μέχρι 45 ευρώ");
+  await desktop.locator(".chat-compose button").click();
+  await desktop.locator(".bubble.assistant").last().waitFor({ timeout: 45000 });
+  const assistantBefore = await desktop.locator(".bubble.assistant").count();
+  await chatInput.fill("να είναι μαύρη και ελαφριά");
+  await desktop.locator(".chat-compose button").click();
+  await desktop.waitForFunction((count) => document.querySelectorAll(".bubble.assistant").length > count, assistantBefore, { timeout: 45000 });
+  const miniCards = await desktop.locator(".mini-products.vertical a").count();
+  if (miniCards > 0) {
+    const first = desktop.locator(".mini-products.vertical a").first();
+    const box = await first.boundingBox();
+    const parent = await desktop.locator(".mini-products.vertical").first().boundingBox();
+    if (!box || !parent || box.width < parent.width * 0.8) throw new Error("Chat product card is not vertically stacked/full width");
+  }
+  await desktop.screenshot({ path: "v3-artifacts/chat-desktop.png", fullPage: true });
+
+  const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
+  await mobile.goto(base, { waitUntil: "networkidle", timeout: 45000 });
+  await mobile.locator(".demand-card").first().waitFor();
+  const overflow = await mobile.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2);
+  if (overflow) throw new Error("Horizontal overflow detected on mobile");
+  await mobile.screenshot({ path: "v3-artifacts/home-mobile.png", fullPage: true });
+
+  console.log(JSON.stringify({ ok: true, productCount, miniCards }, null, 2));
+} finally {
+  await browser.close();
+}

@@ -51,11 +51,11 @@ jobs:
         env:
           BASE_URL: http://127.0.0.1:4173
         run: node scripts/v3-browser-smoke.mjs
-      - name: Upload V3 visual evidence
+      - name: Upload V3 acceptance evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: eu-scout-v3-artifacts
-          path: v3-artifacts/*.png
+          path: v3-artifacts/*
           if-no-files-found: warn
           retention-days: 7

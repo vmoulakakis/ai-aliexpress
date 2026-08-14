@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="el">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <meta name="theme-color" content="#0b1220" />
+  <title>NHMA AI Scout — Έξυπνη αναζήτηση προϊόντων</title>
+  <meta name="description" content="Έξυπνη αναζήτηση προϊόντων και ανεξάρτητος AI σύμβουλος αγορών." />
+  <style>
+    :root{
+      --bg:#f6f8fb;--surface:#fff;--surface-2:#f0f4f8;--text:#0b1220;--muted:#667085;
+      --line:#dfe5ec;--brand:#111827;--brand-2:#334155;--accent:#2563eb;--ok:#15803d;--warn:#b45309;
+      --shadow:0 18px 50px rgba(15,23,42,.08);--radius:18px;--radius-sm:12px;
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5}
+    button,input,textarea{font:inherit} button{cursor:pointer} a{color:inherit} img{max-width:100%;display:block}
+    .topbar{position:sticky;top:0;z-index:20;background:rgba(246,248,251,.88);backdrop-filter:blur(16px);border-bottom:1px solid rgba(223,229,236,.8)}
+    .topbar-inner{max-width:1180px;margin:auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+    .brand{display:flex;align-items:center;gap:11px;min-width:0}.brand-mark{width:38px;height:38px;border-radius:12px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:800;letter-spacing:-.04em;box-shadow:0 8px 20px rgba(15,23,42,.18)}
+    .brand-copy{min-width:0}.brand-title{font-weight:800;letter-spacing:-.025em}.brand-sub{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;white-space:nowrap}.status-dot{width:8px;height:8px;border-radius:50%;background:#94a3b8;box-shadow:0 0 0 4px rgba(148,163,184,.13)}.status-dot.live{background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.12)}
+    main{max-width:1180px;margin:auto;padding:48px 20px 100px}.hero{max-width:760px;margin-bottom:24px}.eyebrow{font-size:13px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.08em}.hero h1{font-size:clamp(31px,5vw,54px);line-height:1.04;letter-spacing:-.045em;margin:10px 0 14px}.hero p{margin:0;color:var(--muted);font-size:clamp(16px,2vw,19px);max-width:680px}
+    .search-card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:18px;box-shadow:var(--shadow)}
+    .search-row{display:flex;gap:10px;align-items:stretch}.query{resize:vertical;min-height:58px;max-height:150px;flex:1;border:1px solid var(--line);border-radius:15px;padding:15px 16px;background:#fff;color:var(--text);outline:none;transition:.2s}.query:focus{border-color:#94a3b8;box-shadow:0 0 0 4px rgba(37,99,235,.08)}
+    .icon-btn,.search-btn{border:0;border-radius:14px;font-weight:700}.icon-btn{width:58px;background:var(--surface-2);color:var(--brand);display:grid;place-items:center}.icon-btn:hover{background:#e6ebf1}.search-btn{padding:0 22px;background:var(--brand);color:#fff;min-width:112px}.search-btn:hover{background:#1f2937}.search-btn:disabled,.icon-btn:disabled{opacity:.55;cursor:not-allowed}
+    .helper-row{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}.helper-label{font-size:12px;color:var(--muted);margin-right:2px}.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 11px;color:#344054;font-size:13px}.chip:hover{border-color:#aeb8c6;background:#f9fafb}.chip.active{background:#eef4ff;border-color:#bfdbfe;color:#1d4ed8}
+    .photo-preview{display:none;margin-top:14px;padding:10px;border:1px dashed #cbd5e1;border-radius:14px;align-items:center;gap:12px;background:#f8fafc}.photo-preview.visible{display:flex}.photo-preview img{width:62px;height:62px;border-radius:10px;object-fit:cover}.photo-copy{flex:1;min-width:0}.photo-copy strong{display:block;font-size:14px}.photo-copy span{font-size:12px;color:var(--muted)}.text-btn{border:0;background:transparent;color:#475569;font-weight:700;padding:8px}
+    .notice{display:none;margin-top:14px;border-radius:14px;padding:13px 14px;border:1px solid #dbeafe;background:#f8fbff;color:#334155}.notice.visible{display:block}.notice strong{display:block;margin-bottom:4px}.notice-options{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+    .results-head{margin:34px 0 16px;display:none;align-items:end;justify-content:space-between;gap:16px}.results-head.visible{display:flex}.results-head h2{margin:0;font-size:24px;letter-spacing:-.025em}.results-meta{color:var(--muted);font-size:13px;text-align:right}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.product{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;min-width:0;transition:transform .18s,box-shadow .18s}.product:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+    .product-media{aspect-ratio:1.15/1;background:#f3f5f7;position:relative;overflow:hidden}.product-media img{width:100%;height:100%;object-fit:contain;padding:12px}.score{position:absolute;left:10px;top:10px;background:rgba(11,18,32,.88);color:white;font-size:12px;font-weight:800;padding:6px 8px;border-radius:999px;backdrop-filter:blur(8px)}
+    .product-body{padding:15px;display:flex;flex-direction:column;gap:10px;flex:1}.product-title{font-size:15px;font-weight:700;line-height:1.38;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.price{font-size:22px;font-weight:850;letter-spacing:-.03em}.why{font-size:13px;color:#475569;min-height:38px}.facts{display:flex;flex-wrap:wrap;gap:6px}.fact{background:#f4f6f8;border-radius:999px;padding:5px 8px;font-size:11px;color:#475569}.product-cta{margin-top:auto;display:block;text-decoration:none;text-align:center;background:var(--brand);color:#fff;border-radius:11px;padding:10px 12px;font-weight:750;font-size:14px}.product-cta:hover{background:#1f2937}
+    .empty{display:none;border:1px solid var(--line);border-radius:18px;background:var(--surface);padding:28px;text-align:center;color:var(--muted)}.empty.visible{display:block}.empty strong{display:block;color:var(--text);font-size:18px;margin-bottom:6px}
+    .skeleton-grid{display:none;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:28px}.skeleton-grid.visible{display:grid}.sk{height:390px;border-radius:18px;background:linear-gradient(90deg,#edf1f5 25%,#f8fafc 50%,#edf1f5 75%);background-size:200% 100%;animation:shimmer 1.3s infinite}@keyframes shimmer{to{background-position:-200% 0}}
+    .chat-launch{position:fixed;z-index:45;right:22px;bottom:22px;border:0;border-radius:999px;background:var(--brand);color:#fff;padding:13px 17px;font-weight:800;box-shadow:0 14px 38px rgba(15,23,42,.28);display:flex;align-items:center;gap:9px}.chat-launch:hover{background:#1f2937}
+    .chat-panel{position:fixed;z-index:50;right:22px;bottom:78px;width:min(390px,calc(100vw - 32px));height:min(70vh,650px);background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 26px 80px rgba(15,23,42,.22);display:none;flex-direction:column;overflow:hidden}.chat-panel.open{display:flex}.chat-head{padding:14px 15px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}.chat-head strong{display:block}.chat-head span{font-size:11px;color:var(--muted)}.close-chat{border:0;background:#f1f5f9;border-radius:10px;width:36px;height:36px;font-size:18px;color:#475569}
+    .chat-log{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:#f8fafc}.bubble{max-width:88%;padding:10px 12px;border-radius:14px;font-size:14px;white-space:pre-wrap;word-break:break-word}.bubble.user{align-self:flex-end;background:var(--brand);color:#fff;border-bottom-right-radius:5px}.bubble.assistant{align-self:flex-start;background:#fff;border:1px solid var(--line);border-bottom-left-radius:5px}.typing{color:var(--muted);font-size:13px;padding:8px 3px}
+    .mini-products{display:grid;gap:8px;margin-top:8px}.mini-product{display:grid;grid-template-columns:56px 1fr;gap:9px;border:1px solid var(--line);border-radius:12px;padding:7px;background:#fff;text-decoration:none}.mini-product img{width:56px;height:56px;border-radius:8px;object-fit:contain;background:#f4f6f8}.mini-title{font-size:12px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.mini-price{font-size:12px;color:#334155;margin-top:3px;font-weight:800}
+    .suggested{display:flex;gap:6px;overflow-x:auto;padding:0 12px 8px;background:#f8fafc}.suggested .chip{white-space:nowrap;background:#fff;padding:7px 10px}
+    .chat-compose{padding:10px;border-top:1px solid var(--line);display:flex;gap:8px;background:#fff}.chat-input{flex:1;resize:none;min-height:42px;max-height:100px;border:1px solid var(--line);border-radius:12px;padding:10px 11px;outline:none}.chat-input:focus{border-color:#94a3b8}.chat-send{border:0;background:var(--brand);color:#fff;border-radius:12px;padding:0 14px;font-weight:800}.chat-send:disabled{opacity:.5}
+    footer{max-width:1180px;margin:0 auto;padding:20px 20px 40px;color:var(--muted);font-size:12px}.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    @media(max-width:900px){.grid,.skeleton-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:640px){.topbar-inner{padding:11px 14px}.brand-sub{display:none}.status span{display:none}main{padding:28px 14px 96px}.hero{margin-bottom:18px}.hero h1{font-size:36px}.search-card{padding:12px;border-radius:18px}.search-row{display:grid;grid-template-columns:1fr 52px}.query{grid-column:1/-1}.icon-btn{width:52px;height:48px}.search-btn{height:48px;padding:0 16px}.grid,.skeleton-grid{grid-template-columns:1fr}.results-head{align-items:flex-start;flex-direction:column}.results-meta{text-align:left}.chat-launch{right:14px;bottom:14px}.chat-panel{right:12px;left:12px;bottom:72px;width:auto;height:68vh;border-radius:18px}.product-media{aspect-ratio:1.35/1}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand" aria-label="NHMA AI Scout">
+        <div class="brand-mark">N</div>
+        <div class="brand-copy"><div class="brand-title">NHMA AI Scout</div><div class="brand-sub">Βρες αυτό που πραγματικά χρειάζεσαι</div></div>
+      </div>
+      <div class="status" id="statusWrap" title="Κατάσταση live αναζήτησης"><span class="status-dot" id="statusDot"></span><span id="statusText">Έλεγχος σύνδεσης…</span></div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="eyebrow">Έξυπνη αναζήτηση προϊόντων</div>
+      <h1>Πες τι χρειάζεσαι.<br>Όχι τι να πληκτρολογήσεις.</h1>
+      <p>Περιέγραψε το προϊόν, τη χρήση, το budget ή τους περιορισμούς σου. Το NHMA ψάχνει live και κρατά μόνο σχετικά αποτελέσματα.</p>
+    </section>
+
+    <section class="search-card" aria-label="Έξυπνη αναζήτηση">
+      <div class="search-row">
+        <label class="sr-only" for="query">Τι ψάχνεις</label>
+        <textarea id="query" class="query" rows="2" placeholder="Τι ψάχνεις σήμερα; Περιέγραψέ το όπως θα το έλεγες σε έναν άνθρωπο."></textarea>
+        <button class="icon-btn" id="photoBtn" type="button" aria-label="Αναζήτηση με φωτογραφία" title="Φωτογραφία / κάμερα">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M14.5 4 16 6h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3l1.5-2h5Z"/><circle cx="12" cy="12.5" r="3.5"/></svg>
+        </button>
+        <button class="search-btn" id="searchBtn" type="button">Αναζήτηση</button>
+        <input id="photoInput" type="file" accept="image/*" capture="environment" hidden />
+      </div>
+
+      <div class="helper-row" aria-label="Γρήγοροι περιορισμοί">
+        <span class="helper-label">Περιορισμοί:</span>
+        <button class="chip constraint" data-add="έως 50 ευρώ" type="button">Κάτω από €50</button>
+        <button class="chip constraint" data-add="μόνο EU stock" type="button">EU stock</button>
+        <button class="chip constraint" data-add="με δωρεάν μεταφορικά" type="button">Δωρεάν μεταφορικά</button>
+        <button class="chip constraint" data-add="πωλητής με τουλάχιστον 95% θετικές αξιολογήσεις" type="button">Υψηλή αξιολόγηση</button>
+      </div>
+      <div class="helper-row" aria-label="Κατηγορίες">
+        <span class="helper-label">Ιδέες:</span>
+        <button class="chip starter" data-value="laptop για καθημερινή εργασία" type="button">Τεχνολογία</button>
+        <button class="chip starter" data-value="χρήσιμο προϊόν για το σπίτι" type="button">Σπίτι</button>
+        <button class="chip starter" data-value="εργονομικό προϊόν για πολλές ώρες εργασίας" type="button">Εργασία</button>
+        <button class="chip starter" data-value="πρακτικό προϊόν για ταξίδι" type="button">Ταξίδι</button>
+        <button class="chip starter" data-value="χρήσιμο προϊόν για παιδί" type="button">Παιδιά</button>
+        <button class="chip starter" data-value="προϊόν για άθληση και fitness" type="button">Αθλητισμός</button>
+        <button class="chip starter" data-value="ρούχο ή αξεσουάρ μόδας" type="button">Μόδα</button>
+        <button class="chip starter" data-value="πρωτότυπο δώρο" type="button">Δώρο</button>
+      </div>
+
+      <div class="photo-preview" id="photoPreview">
+        <img id="photoImg" alt="Προεπισκόπηση φωτογραφίας" />
+        <div class="photo-copy"><strong>Φωτογραφία έτοιμη για αναζήτηση</strong><span id="photoName">Εικόνα προϊόντος</span></div>
+        <button class="text-btn" id="removePhoto" type="button">Αφαίρεση</button>
+      </div>
+
+      <div class="notice" id="notice" role="status" aria-live="polite"></div>
+    </section>
+
+    <div class="skeleton-grid" id="skeletons" aria-hidden="true"><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
+    <div class="results-head" id="resultsHead"><h2>Live επιλογές</h2><div class="results-meta" id="resultsMeta"></div></div>
+    <section class="grid" id="products" aria-live="polite"></section>
+    <section class="empty" id="empty"><strong>Δεν βρέθηκαν αρκετά σχετικά live αποτελέσματα.</strong><span>Δοκίμασε να αφαιρέσεις έναν περιορισμό ή να περιγράψεις λίγο διαφορετικά το προϊόν. Δεν θα σου δείξουμε άσχετα προϊόντα μόνο και μόνο για να γεμίσει η σελίδα.</span></section>
+  </main>
+
+  <footer>Οι τιμές και τα στοιχεία προϊόντων προέρχονται από live πηγές όταν διατίθενται. Το NHMA δεν επινοεί stock, μεταφορικά, παράδοση ή αξιολογήσεις που δεν επιβεβαιώνονται.</footer>
+
+  <button class="chat-launch" id="chatLaunch" type="button" aria-expanded="false" aria-controls="chatPanel">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"/></svg>
+    Ρώτα το NHMA
+  </button>
+
+  <aside class="chat-panel" id="chatPanel" aria-label="NHMA AI Σύμβουλος">
+    <div class="chat-head"><div><strong>NHMA AI Σύμβουλος</strong><span>Ανεξάρτητη συζήτηση με μνήμη</span></div><button class="close-chat" id="closeChat" type="button" aria-label="Κλείσιμο">×</button></div>
+    <div class="chat-log" id="chatLog" aria-live="polite"></div>
+    <div class="suggested" id="suggested"></div>
+    <div class="chat-compose">
+      <label class="sr-only" for="chatInput">Μήνυμα</label>
+      <textarea class="chat-input" id="chatInput" rows="1" placeholder="Ρώτησέ με ό,τι θέλεις…"></textarea>
+      <button class="chat-send" id="chatSend" type="button">Στείλε</button>
+    </div>
+  </aside>
+
+  <script>
+    (() => {
+      'use strict';
+      const API = 'https://bgvgstpoypqbjnemqcqp.supabase.co/functions/v1';
+      const $ = (id) => document.getElementById(id);
+      const els = {
+        query:$('query'), searchBtn:$('searchBtn'), photoBtn:$('photoBtn'), photoInput:$('photoInput'), photoPreview:$('photoPreview'), photoImg:$('photoImg'), photoName:$('photoName'), removePhoto:$('removePhoto'), notice:$('notice'), products:$('products'), empty:$('empty'), skeletons:$('skeletons'), resultsHead:$('resultsHead'), resultsMeta:$('resultsMeta'), statusDot:$('statusDot'), statusText:$('statusText'), chatLaunch:$('chatLaunch'), chatPanel:$('chatPanel'), closeChat:$('closeChat'), chatLog:$('chatLog'), chatInput:$('chatInput'), chatSend:$('chatSend'), suggested:$('suggested')
+      };
+      let imageData = null;
+      let imageFilename = '';
+      let searching = false;
+      let chatting = false;
+
+      function newUuid(){
+        if (crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0,v=c==='x'?r:(r&3|8);return v.toString(16)});
+      }
+      function getSession(){
+        let id = localStorage.getItem('nhma_session_id');
+        if(!id){ id = newUuid(); localStorage.setItem('nhma_session_id', id); }
+        return id;
+      }
+      const sessionId = getSession();
+
+      async function apiFetch(path, options={}){
+        const controller = new AbortController();
+        const timer = setTimeout(()=>controller.abort(), 30000);
+        try{
+          const res = await fetch(API + '/' + path, {...options, signal:controller.signal, headers:{'content-type':'application/json', ...(options.headers||{})}});
+          const data = await res.json().catch(()=>({}));
+          if(!res.ok) throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+          return data;
+        } finally { clearTimeout(timer); }
+      }
+      function safeUrl(value){
+        try{ const u=new URL(String(value||'')); return (u.protocol==='https:'||u.protocol==='http:')?u.href:null; }catch{return null}
+      }
+      function money(v,c='EUR'){
+        const n=Number(v); if(!Number.isFinite(n)) return null;
+        try{return new Intl.NumberFormat('el-GR',{style:'currency',currency:c||'EUR',maximumFractionDigits:2}).format(n)}catch{return `${n.toFixed(2)} ${c||'EUR'}`}
+      }
+      function setNotice(title, text, options=[]){
+        els.notice.textContent='';
+        if(!title){els.notice.classList.remove('visible');return}
+        const s=document.createElement('strong');s.textContent=title;els.notice.appendChild(s);
+        if(text){const d=document.createElement('div');d.textContent=text;els.notice.appendChild(d)}
+        if(options.length){
+          const wrap=document.createElement('div');wrap.className='notice-options';
+          options.slice(0,6).forEach(o=>{const b=document.createElement('button');b.type='button';b.className='chip';b.textContent=String(o);b.addEventListener('click',()=>{els.query.value=[els.query.value.trim(),String(o)].filter(Boolean).join(' ');setNotice(null);els.query.focus()});wrap.appendChild(b)});
+          els.notice.appendChild(wrap);
+        }
+        els.notice.classList.add('visible');
+      }
+      function loadingSearch(on){
+        searching=on;els.searchBtn.disabled=on;els.photoBtn.disabled=on;els.searchBtn.textContent=on?'Ψάχνω…':'Αναζήτηση';
+        els.skeletons.classList.toggle('visible',on); if(on){els.products.textContent='';els.empty.classList.remove('visible');els.resultsHead.classList.remove('visible')}
+      }
+      function renderProducts(products, meta={}){
+        els.products.textContent='';
+        const list=Array.isArray(products)?products.filter(Boolean):[];
+        if(!list.length){els.resultsHead.classList.add('visible');els.resultsMeta.textContent=meta.query?`Αναζήτηση: ${meta.query}`:'';els.empty.classList.add('visible');return}
+        els.empty.classList.remove('visible');els.resultsHead.classList.add('visible');
+        els.resultsMeta.textContent=`${list.length} σχετικά αποτελέσματα${meta.query?` · ${meta.query}`:''}`;
+        list.forEach(p=>{
+          const card=document.createElement('article');card.className='product';
+          const media=document.createElement('div');media.className='product-media';
+          const img=document.createElement('img');img.loading='lazy';img.alt=String(p.title||'Προϊόν');img.src=safeUrl(p.imageUrl)||'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="500" height="400"><rect width="100%" height="100%" fill="#f1f5f9"/><text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" fill="#94a3b8" font-family="sans-serif" font-size="20">Χωρίς εικόνα</text></svg>');media.appendChild(img);
+          if(Number.isFinite(Number(p.matchScore))){const sc=document.createElement('span');sc.className='score';sc.textContent=`${Math.round(Number(p.matchScore))}% match`;media.appendChild(sc)}
+          const body=document.createElement('div');body.className='product-body';
+          const title=document.createElement('div');title.className='product-title';title.textContent=String(p.title||'Προϊόν');body.appendChild(title);
+          const pr=money(p.price,p.currency);if(pr){const price=document.createElement('div');price.className='price';price.textContent=pr;body.appendChild(price)}
+          if(p.why){const why=document.createElement('div');why.className='why';why.textContent=String(p.why);body.appendChild(why)}
+          const facts=document.createElement('div');facts.className='facts';
+          const feedback=p.verification?.positiveFeedback ?? p.positiveFeedbackRate; if(feedback!=null){const f=document.createElement('span');f.className='fact';f.textContent=`Αξιολόγηση ${String(feedback).replace('%','')}%`;facts.appendChild(f)}
+          if(Number.isFinite(Number(p.sales))&&Number(p.sales)>0){const f=document.createElement('span');f.className='fact';f.textContent=`${Number(p.sales).toLocaleString('el-GR')} πωλήσεις`;facts.appendChild(f)}
+          if(p.category){const f=document.createElement('span');f.className='fact';f.textContent=String(p.category);facts.appendChild(f)}
+          if(facts.childNodes.length)body.appendChild(facts);
+          const href=safeUrl(p.promotionLink)||safeUrl(p.productUrl);if(href){const a=document.createElement('a');a.className='product-cta';a.href=href;a.target='_blank';a.rel='noopener noreferrer sponsored';a.textContent='Δες το προϊόν';body.appendChild(a)}
+          card.append(media,body);els.products.appendChild(card);
+        });
+      }
+      async function runSearch(){
+        if(searching)return;
+        const message=els.query.value.trim();
+        if(!message&&!imageData){setNotice('Τι θέλεις να βρούμε;','Γράψε ένα προϊόν, μια ανάγκη ή πρόσθεσε φωτογραφία.');els.query.focus();return}
+        loadingSearch(true);setNotice(null);
+        try{
+          const payload={sessionId}; if(message)payload.message=message;if(imageData)payload.image=imageData;
+          const data=await apiFetch('nhma-search',{method:'POST',body:JSON.stringify(payload)});
+          if(data.status==='clarify'){
+            renderProducts([], {query:data.query});
+            els.empty.classList.remove('visible');
+            setNotice(data.question||'Χρειάζομαι μία διευκρίνιση.',data.understood||'',Array.isArray(data.options)?data.options:[]);
+          }else{
+            if(data.understood) setNotice('Κατάλαβα την αναζήτησή σου',String(data.understood));
+            renderProducts(data.products,{query:data.query});
+          }
+        }catch(err){
+          renderProducts([]);els.empty.classList.remove('visible');
+          setNotice('Η live αναζήτηση δεν απάντησε.','Δοκίμασε ξανά σε λίγο. Η αναζήτησή σου δεν χάθηκε.');
+        }finally{loadingSearch(false)}
+      }
+      els.searchBtn.addEventListener('click',runSearch);
+      els.query.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();runSearch()}});
+      document.querySelectorAll('.constraint').forEach(b=>b.addEventListener('click',()=>{const add=b.dataset.add||'';const current=els.query.value.trim();els.query.value=current?`${current}, ${add}`:add;els.query.focus()}));
+      document.querySelectorAll('.starter').forEach(b=>b.addEventListener('click',()=>{els.query.value=b.dataset.value||'';els.query.focus()}));
+      els.photoBtn.addEventListener('click',()=>els.photoInput.click());
+      els.photoInput.addEventListener('change',()=>{
+        const file=els.photoInput.files&&els.photoInput.files[0];if(!file)return;
+        if(!file.type.startsWith('image/')){setNotice('Μη υποστηριζόμενο αρχείο','Διάλεξε μία φωτογραφία προϊόντος.');return}
+        if(file.size>8*1024*1024){setNotice('Η φωτογραφία είναι πολύ μεγάλη','Διάλεξε εικόνα έως 8 MB.');return}
+        const reader=new FileReader();reader.onload=()=>{imageData=String(reader.result||'');imageFilename=file.name;els.photoImg.src=imageData;els.photoName.textContent=imageFilename||'Εικόνα προϊόντος';els.photoPreview.classList.add('visible')};reader.readAsDataURL(file);
+      });
+      els.removePhoto.addEventListener('click',()=>{imageData=null;imageFilename='';els.photoInput.value='';els.photoPreview.classList.remove('visible');els.photoImg.removeAttribute('src')});
+
+      async function health(){
+        try{const r=await fetch(API+'/nhma-health',{cache:'no-store'});const d=await r.json();const live=Boolean(d?.integrations?.aliexpress);els.statusDot.classList.toggle('live',live);els.statusText.textContent=live?'Live search διαθέσιμο':'Live search περιορισμένο'}catch{els.statusText.textContent='Live search'}
+      }
+      health();
+
+      function loadHistory(){
+        try{const x=JSON.parse(localStorage.getItem('nhma_chat_history_v1')||'[]');return Array.isArray(x)?x.slice(-60):[]}catch{return []}
+      }
+      let history=loadHistory();
+      function saveHistory(){localStorage.setItem('nhma_chat_history_v1',JSON.stringify(history.slice(-60)))}
+      function addBubble(role,text,products=[]){
+        const b=document.createElement('div');b.className=`bubble ${role==='user'?'user':'assistant'}`;b.textContent=String(text||'');
+        if(role!=='user'&&Array.isArray(products)&&products.length){
+          const wrap=document.createElement('div');wrap.className='mini-products';
+          products.slice(0,3).forEach(p=>{const href=safeUrl(p.promotionLink)||safeUrl(p.productUrl);const card=document.createElement(href?'a':'div');card.className='mini-product';if(href){card.href=href;card.target='_blank';card.rel='noopener noreferrer sponsored'}const im=document.createElement('img');im.alt='';im.src=safeUrl(p.imageUrl)||'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="100%" height="100%" fill="#f1f5f9"/></svg>');const c=document.createElement('div');const t=document.createElement('div');t.className='mini-title';t.textContent=String(p.title||'Προϊόν');c.appendChild(t);const pm=money(p.price,p.currency);if(pm){const pr=document.createElement('div');pr.className='mini-price';pr.textContent=pm;c.appendChild(pr)}card.append(im,c);wrap.appendChild(card)});b.appendChild(wrap)
+        }
+        els.chatLog.appendChild(b);els.chatLog.scrollTop=els.chatLog.scrollHeight;
+      }
+      function renderHistory(){els.chatLog.textContent='';if(!history.length)addBubble('assistant','Πες μου τι προσπαθείς να βρεις ή να αποφασίσεις. Θα κρατήσω τα κριτήριά σου στη συζήτηση.');else history.forEach(m=>addBubble(m.role,m.text,m.products||[]))}
+      function renderSuggestions(items){els.suggested.textContent='';(Array.isArray(items)?items:[]).slice(0,5).forEach(x=>{const b=document.createElement('button');b.type='button';b.className='chip';b.textContent=String(x);b.addEventListener('click',()=>{els.chatInput.value=String(x);sendChat()});els.suggested.appendChild(b)})}
+      function setChatOpen(open){els.chatPanel.classList.toggle('open',open);els.chatLaunch.setAttribute('aria-expanded',String(open));if(open){renderHistory();setTimeout(()=>els.chatInput.focus(),30)}}
+      els.chatLaunch.addEventListener('click',()=>setChatOpen(!els.chatPanel.classList.contains('open')));els.closeChat.addEventListener('click',()=>setChatOpen(false));
+      async function sendChat(){
+        if(chatting)return;const message=els.chatInput.value.trim();if(!message)return;
+        chatting=true;els.chatSend.disabled=true;els.chatInput.value='';history.push({role:'user',text:message});saveHistory();addBubble('user',message);renderSuggestions([]);
+        const typing=document.createElement('div');typing.className='typing';typing.textContent='Σκέφτομαι…';els.chatLog.appendChild(typing);els.chatLog.scrollTop=els.chatLog.scrollHeight;
+        try{
+          const data=await apiFetch('nhma-chat',{method:'POST',body:JSON.stringify({message,sessionId})});typing.remove();const reply=String(data.reply||'Δεν πήρα καθαρή απάντηση. Δοκίμασε να το πεις λίγο διαφορετικά.');const products=Array.isArray(data.products)?data.products:[];history.push({role:'assistant',text:reply,products:products.slice(0,3)});saveHistory();addBubble('assistant',reply,products);renderSuggestions(data.suggestedReplies);
+        }catch{typing.remove();const reply='Δεν μπόρεσα να απαντήσω αυτή τη στιγμή. Το ιστορικό σου παραμένει εδώ — δοκίμασε ξανά σε λίγο.';history.push({role:'assistant',text:reply});saveHistory();addBubble('assistant',reply)}finally{chatting=false;els.chatSend.disabled=false;els.chatInput.focus()}
+      }
+      els.chatSend.addEventListener('click',sendChat);els.chatInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat()}});
+      renderHistory();
+    })();
+  </script>
+</body>
+</html>

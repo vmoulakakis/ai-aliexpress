@@ -30,8 +30,12 @@ jobs:
         run: npm run build
       - name: Install Playwright smoke dependency
         run: npm install --no-save --no-audit --no-fund playwright
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Resolve installed Chrome
+        shell: bash
+        run: |
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$CHROME" ]; then echo 'No preinstalled Chrome found'; exit 1; fi
+          echo "CHROME_PATH=$CHROME" >> "$GITHUB_ENV"
       - name: Start Next.js locally
         shell: bash
         run: |

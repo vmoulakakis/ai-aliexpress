@@ -1,0 +1,13 @@
+node_modules/
+.next/
+out/
+.vercel/
+coverage/
+playwright-report/
+test-results/
+v3-artifacts/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store

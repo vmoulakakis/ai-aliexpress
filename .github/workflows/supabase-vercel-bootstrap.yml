@@ -19,7 +19,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          HTTP_STATUS=$(curl --silent --show-error \
+          HTTP_STATUS=$(curl --silent --show-error --max-time 20 \
             -o /tmp/vercel-bootstrap.json \
             -w '%{http_code}' \
             -X POST \

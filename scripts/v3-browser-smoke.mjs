@@ -2,9 +2,10 @@ import { chromium } from "playwright";
 import fs from "node:fs/promises";
 
 const base = process.env.BASE_URL || "http://127.0.0.1:4173";
+const executablePath = process.env.CHROME_PATH || undefined;
 await fs.mkdir("v3-artifacts", { recursive: true });
 
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ headless: true, ...(executablePath ? { executablePath } : {}) });
 try {
   const desktop = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
   await desktop.goto(base, { waitUntil: "networkidle", timeout: 45000 });

@@ -56,6 +56,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: eu-scout-v3-artifacts
-          path: v3-artifacts/*
+          path: |
+            v3-artifacts/*
+            package-lock.json
           if-no-files-found: warn
           retention-days: 7

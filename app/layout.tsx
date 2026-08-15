@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { ProductImageProxy } from "@/components/product-image-proxy";
+import { AnalyticsProvider } from "@/components/analytics-provider";
 import "./globals.css";
 import "./v3.css";
 
@@ -27,7 +28,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="el">
       <body>
         <ProductImageProxy />
-        {children}
+        <AnalyticsProvider>{children}</AnalyticsProvider>
       </body>
     </html>
   );

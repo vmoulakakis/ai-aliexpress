@@ -3,14 +3,18 @@ name: EU Scout V3 Quality Gate
 on:
   push:
     branches:
+      - main
       - 'redesign/eu-scout-next-v3'
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: eu-scout-v3-quality
+  group: eu-scout-v3-quality-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -18,10 +22,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
+          cache: npm
       - name: Install app
         run: npm install --no-audit --no-fund
       - name: Typecheck

@@ -32,6 +32,8 @@ jobs:
         run: npx tsx scripts/v4-semantic-sim.ts
       - name: Official AliExpress V4 hard-gate test
         run: node scripts/v4-live-search.mjs
+      - name: Supabase EU warehouse edge discovery
+        run: node scripts/v4-eu-edge-probe.mjs
       - name: Typecheck
         run: npm run typecheck
       - name: Build

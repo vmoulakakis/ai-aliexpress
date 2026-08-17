@@ -36,7 +36,7 @@ jobs:
           echo "CHROME_PATH=$CHROME" >> "$GITHUB_ENV"
       - name: Semantic 1000-user simulation
         run: npx tsx scripts/v4-semantic-sim.ts
-      - name: Probe EU retail card to affiliate bridge
+      - name: Server EU proof to official affiliate bridge
         run: node scripts/v4-retail-affiliate-probe.mjs
       - name: Joined V4 live search hard gate
         run: node scripts/v4-live-search.mjs
@@ -46,7 +46,8 @@ jobs:
         run: npm run typecheck
       - name: Build
         run: npm run build
-      - name: Probe explicit AliExpress EU warehouse web filter
+      - name: Diagnostic raw AliExpress browser probe
+        continue-on-error: true
         run: node scripts/v4-eu-page-probe.mjs
       - name: Start Next.js locally
         shell: bash

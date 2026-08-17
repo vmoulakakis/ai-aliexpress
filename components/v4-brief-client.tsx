@@ -52,7 +52,7 @@ export function V4BriefClient({ research }: { research: Research }) {
   }, [products, research.demand_slug, research.token]);
 
   async function share() {
-    const data = { title: "Η AI έρευνα αγορών μου · ΒρεςΜου", text: research.understood, url: window.location.href };
+    const data = { title: "Η AI έρευνα αγορών μου · AIgora", text: research.understood, url: window.location.href };
     if (navigator.share) { await navigator.share(data); return; }
     await navigator.clipboard?.writeText(window.location.href);
     window.alert("Ο σύνδεσμος της έρευνας αντιγράφηκε.");
@@ -61,7 +61,7 @@ export function V4BriefClient({ research }: { research: Research }) {
   return (
     <main className="brief-page">
       <header className="brief-topbar no-print">
-        <a href="/" className="catalog-brand">◒ <b>ΒρεςΜου</b></a>
+        <a href="/" className="catalog-brand"><span className="brand-mark">AI</span> <b>AIgora</b></a>
         <div><button onClick={() => void share()}>Μοιράσου ↗</button><button className="brief-primary" onClick={() => window.print()}>Αποθήκευση ως PDF ↓</button></div>
       </header>
       <section className="brief-cover">
@@ -103,7 +103,7 @@ export function V4BriefClient({ research }: { research: Research }) {
         <h2>Διαφάνεια πριν από την αγορά</h2>
         <p>Οι τιμές, το stock και οι χρόνοι παράδοσης μπορούν να αλλάξουν μετά τη δημιουργία αυτής της έρευνας. Οι σύνδεσμοι αγοράς είναι affiliate links και μπορεί να λάβουμε προμήθεια χωρίς επιπλέον κόστος για εσένα. Το ranking δεν βασίζεται στην προμήθεια.</p>
       </section>
-      <footer className="brief-footer"><b>ΒρεςΜου</b><span>AI αγορές με νόημα · {new Date(research.created_at).toLocaleDateString("el-GR")}</span></footer>
+      <footer className="brief-footer"><b>AIgora</b><span>AI που διαβάζει την αγορά πριν αγοράσεις · {new Date(research.created_at).toLocaleDateString("el-GR")}</span></footer>
     </main>
   );
 }

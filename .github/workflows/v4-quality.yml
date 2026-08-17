@@ -17,7 +17,7 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -42,6 +42,8 @@ jobs:
         run: node scripts/v4-live-search.mjs
       - name: Supabase EU warehouse edge discovery
         run: node scripts/v4-eu-edge-probe.mjs
+      - name: Stage4 engagement and tracking live gate
+        run: node scripts/v4-engagement-live.mjs
       - name: Typecheck
         run: npm run typecheck
       - name: Build
@@ -60,6 +62,15 @@ jobs:
           done
           cat /tmp/v4.log
           exit 1
+      - name: Stage4 first-party routes
+        shell: bash
+        run: |
+          RESEARCH=$(node -p "require('./v4-artifacts/stage4-research.json').researchToken")
+          OUTBOUND=$(node -p "require('./v4-artifacts/stage4-research.json').outboundToken")
+          curl -fsS "http://127.0.0.1:4173/brief/$RESEARCH" -o /tmp/brief.html
+          grep -q "Η έρευνά σου" /tmp/brief.html
+          curl -sS -D /tmp/go.headers -o /dev/null "http://127.0.0.1:4173/go/$OUTBOUND?source=ci-route"
+          grep -qi '^location: https://s.click.aliexpress.com/' /tmp/go.headers
       - name: Browser acceptance smoke
         env:
           BASE_URL: http://127.0.0.1:4173

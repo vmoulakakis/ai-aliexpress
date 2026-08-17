@@ -1,7 +1,7 @@
-import { V4Home } from "@/components/v4-home";
+import { V4HomeStage4 } from "@/components/v4-home-stage4";
 
 export const dynamic = "force-dynamic";
 
 export default function Page() {
-  return <V4Home />;
+  return <V4HomeStage4 />;
 }

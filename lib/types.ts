@@ -11,13 +11,17 @@ export type ProductDecision = {
 
 export type Product = {
   productId?: string;
+  displayProductId?: string;
   title?: string;
   imageUrl?: string;
   price?: number;
   currency?: string;
   originalPrice?: number;
   productUrl?: string;
+  retailProductUrl?: string;
   promotionLink?: string;
+  trackingPath?: string;
+  outboundToken?: string;
   sales?: number;
   positiveFeedbackRate?: string | number;
   category?: string;
@@ -49,16 +53,14 @@ export type SearchAnalysis = {
   euEvidenceCount?: number;
   detailChecked?: number;
   detailMissing?: number;
+  affiliateCandidateCount?: number;
+  intersectionCount?: number;
   rejectedIdentity?: number;
   rejectedBudget?: number;
   rejectedAffiliate?: number;
   cacheHits?: number;
   verifiedCount?: number;
-  hardRules?: {
-    euWarehouse?: boolean;
-    affiliateTrackingUrl?: boolean;
-    shipToCountry?: string;
-  };
+  hardRules?: { euWarehouse?: boolean; affiliateTrackingUrl?: boolean; shipToCountry?: string };
 };
 
 export type RecoveryOption = { label: string; query: string; priority?: number };
@@ -76,16 +78,5 @@ export type SearchResponse = {
   source?: string;
 };
 
-export type ChatResponse = {
-  sessionId?: string;
-  reply?: string;
-  action?: string;
-  suggestedReplies?: string[];
-  products?: Product[];
-};
-
-export type ChatMessage = {
-  role: "user" | "assistant";
-  text: string;
-  products?: Product[];
-};
+export type ChatResponse = { sessionId?: string; reply?: string; action?: string; suggestedReplies?: string[]; products?: Product[] };
+export type ChatMessage = { role: "user" | "assistant"; text: string; products?: Product[] };

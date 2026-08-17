@@ -2,11 +2,9 @@ name: V4 Demand Commerce Quality Gate
 
 on:
   push:
-    branches:
-      - 'v4-demand-commerce'
+    branches: ['v4-demand-commerce']
   pull_request:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -19,7 +17,7 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -28,12 +26,14 @@ jobs:
           package-manager-cache: false
       - name: Install app
         run: npm install --no-audit --no-fund
+      - name: Install test helpers
+        run: npm install --no-save --no-audit --no-fund playwright tsx
+      - name: Semantic 1000-user simulation
+        run: npx tsx scripts/v4-semantic-sim.ts
       - name: Typecheck
         run: npm run typecheck
       - name: Build
         run: npm run build
-      - name: Install Playwright smoke dependency
-        run: npm install --no-save --no-audit --no-fund playwright
       - name: Resolve installed Chrome
         shell: bash
         run: |

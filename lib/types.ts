@@ -1,5 +1,14 @@
 export type VerificationState = "verified" | "not_eu" | "not_free" | "unknown" | string;
 
+export type ProductDecision = {
+  role?: "best_match" | "best_value" | "alternative" | string;
+  fitScore?: number;
+  strengths?: string[];
+  limitations?: string[];
+  verifiedFields?: string[];
+  unknownFields?: string[];
+};
+
 export type Product = {
   productId?: string;
   title?: string;
@@ -15,6 +24,11 @@ export type Product = {
   rank?: number;
   matchScore?: number;
   why?: string;
+  shipFrom?: string;
+  delivery?: string | number;
+  shipping?: number;
+  commissionRate?: string | number;
+  decision?: ProductDecision;
   verification?: {
     euWarehouse?: VerificationState;
     freeShipping?: VerificationState;
@@ -22,14 +36,33 @@ export type Product = {
   };
 };
 
+export type SearchAnalysis = {
+  runs?: number;
+  queriesUsed?: string[];
+  upstreamEligible?: number;
+  rejectedByEuGate?: number;
+  rejectedMissingAffiliate?: number;
+  verifiedCount?: number;
+  hardRules?: {
+    euWarehouse?: boolean;
+    affiliateTrackingUrl?: boolean;
+    shipToCountry?: string;
+  };
+};
+
+export type RecoveryOption = { label: string; query: string; priority?: number };
+
 export type SearchResponse = {
-  status?: "complete" | "clarify" | string;
+  status?: "complete" | "clarify" | "recovery" | string;
   understood?: string;
   query?: string;
   question?: string | null;
   options?: string[];
   products?: Product[];
   warnings?: string[];
+  recoveryOptions?: RecoveryOption[];
+  analysis?: SearchAnalysis;
+  source?: string;
 };
 
 export type ChatResponse = {

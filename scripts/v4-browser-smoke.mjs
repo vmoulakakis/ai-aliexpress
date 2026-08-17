@@ -40,11 +40,13 @@ for (const viewport of [{ width: 1440, height: 1000, name: "desktop" }, { width:
   });
   await page.goto(base, { waitUntil: "networkidle" });
   const expect = async (condition, label) => { if (!condition) failures.push(`${viewport.name}: ${label}`); };
-  await expect((await page.locator("body").innerText()).includes("ΒρεςΜου"), "brand missing");
+  const bodyText = await page.locator("body").innerText();
+  await expect(bodyText.includes("AIgora"), "AIgora brand missing");
+  await expect(bodyText.includes("Χωρίς εισαγωγικούς δασμούς"), "EU/no-import-duty message missing");
   const input = page.getByRole("textbox", { name: "AI semantic αναζήτηση" });
   await input.fill("τρίχες σκύλου παντού, έως 300 ευρώ");
   await expect(await page.locator(".semantic-suggestions button").count() > 0, "semantic suggestions missing");
-  await page.getByRole("button", { name: /Βρες μου λύση/ }).click();
+  await page.getByRole("button", { name: /Ρώτα το AI/ }).click();
   await page.locator(".tracked-cta").first().waitFor({ state: "visible", timeout: 5000 });
   await expect(await page.locator(".result-card").count() === 3, "results not rendered");
   await expect(searchBodies.some((body) => String(body.message || "").includes("αποθήκη ΕΕ")), "EU-only phrase missing");
@@ -65,9 +67,9 @@ for (const viewport of [{ width: 1440, height: 1000, name: "desktop" }, { width:
   await expect(!overflow, "horizontal overflow");
   const unnamed = await page.locator("button").evaluateAll((buttons) => buttons.filter((button) => !(button.getAttribute("aria-label") || button.textContent || "").trim()).length);
   await expect(unnamed === 0, "unnamed clickable buttons");
-  await page.screenshot({ path: `${out}/home-stage4-${viewport.name}.png`, fullPage: true });
+  await page.screenshot({ path: `${out}/home-aigora-${viewport.name}.png`, fullPage: true });
   await page.close();
 }
 await browser.close();
-if (failures.length) { console.error("V4 browser smoke failed:\n" + failures.map((item) => `- ${item}`).join("\n")); process.exit(1); }
-console.log("V4 browser smoke passed: semantic search + first-party tracking + save + compare + lead funnel on desktop/mobile.");
+if (failures.length) { console.error("AIgora V4 browser smoke failed:\n" + failures.map((item) => `- ${item}`).join("\n")); process.exit(1); }
+console.log("AIgora V4 browser smoke passed: semantic search + EU messaging + first-party tracking + save + compare + lead funnel on desktop/mobile.");

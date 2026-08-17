@@ -10,9 +10,9 @@ import "./v4-stage5-extra.css";
 import "./v4-overrides.css";
 
 export const metadata: Metadata = {
-  title: { default: "ΒρεςΜου — AI αγορές με νόημα", template: "%s · ΒρεςΜου" },
-  description: "AI demand intelligence και semantic shopping για πραγματικές ανάγκες, premium λύσεις και προϊόντα με επαληθευμένο EU warehouse proof.",
-  applicationName: "ΒρεςΜου", category: "shopping", robots: { index: true, follow: true },
+  title: { default: "AIgora — AI που διαβάζει την αγορά πριν αγοράσεις", template: "%s · AIgora" },
+  description: "AI demand intelligence και semantic shopping για πραγματικές ανάγκες, premium λύσεις 100€+ και verified προϊόντα από αποθήκες ΕΕ.",
+  applicationName: "AIgora", category: "shopping", robots: { index: true, follow: true },
 };
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", colorScheme: "light", themeColor: "#ffffff" };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) { return <html lang="el"><body><ProductImageProxy />{children}<V4ActivityToast /></body></html>; }

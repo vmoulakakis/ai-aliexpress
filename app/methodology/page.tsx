@@ -14,8 +14,8 @@ const steps = [
 export default function MethodologyPage() {
   return (
     <main className="catalog-page">
-      <header className="catalog-header"><Link href="/" className="catalog-brand">◒ <b>ΒρεςΜου</b></Link><Link href="/needs">Δες ανάγκες →</Link></header>
-      <section className="catalog-hero"><p className="eyebrow">TRUST BY DESIGN</p><h1>Πώς δουλεύει το ΒρεςΜου.</h1><p>Η προμήθεια affiliate δεν αποτελεί κριτήριο semantic relevance. Πρώτα έρχεται η σωστή αντιστοίχιση και μετά το εμπορικό link.</p></section>
+      <header className="catalog-header"><Link href="/" className="catalog-brand"><span className="brand-mark">AI</span> <b>AIgora</b></Link><Link href="/needs">Δες ανάγκες →</Link></header>
+      <section className="catalog-hero"><p className="eyebrow">TRUST BY DESIGN</p><h1>Πώς δουλεύει το AIgora.</h1><p>Η προμήθεια affiliate δεν αποτελεί κριτήριο semantic relevance. Πρώτα έρχεται η σωστή αντιστοίχιση και μετά το εμπορικό link.</p></section>
       <section className="methodology-list">{steps.map(([number,title,text]) => <article key={number}><b>{number}</b><div><h2>{title}</h2><p>{text}</p></div></article>)}</section>
     </main>
   );

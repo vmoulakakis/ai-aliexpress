@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { resolveDemandCase } from "@/lib/demand";
+import { retrievalQueriesFor } from "@/lib/demand-retrieval";
 import { relayJson } from "@/lib/upstream";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +12,7 @@ export async function POST(request: Request) {
   const semanticDemand = match ? {
     slug: match.item.slug,
     searchQuery: match.item.searchQuery,
+    retrievalQueries: retrievalQueriesFor(match.item.slug, match.item.searchQuery),
     aliases: match.item.aliases.slice(0, 4),
     solutionPaths: match.item.solutionPaths,
     semanticScore: match.score,

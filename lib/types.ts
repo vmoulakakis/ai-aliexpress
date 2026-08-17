@@ -28,6 +28,10 @@ export type Product = {
   delivery?: string | number;
   shipping?: number;
   commissionRate?: string | number;
+  warehouseCountry?: string;
+  warehouseProofUrl?: string;
+  warehouseVerifiedAt?: string;
+  warehouseVerificationSource?: string;
   decision?: ProductDecision;
   verification?: {
     euWarehouse?: VerificationState;
@@ -42,6 +46,13 @@ export type SearchAnalysis = {
   upstreamEligible?: number;
   rejectedByEuGate?: number;
   rejectedMissingAffiliate?: number;
+  euEvidenceCount?: number;
+  detailChecked?: number;
+  detailMissing?: number;
+  rejectedIdentity?: number;
+  rejectedBudget?: number;
+  rejectedAffiliate?: number;
+  cacheHits?: number;
   verifiedCount?: number;
   hardRules?: {
     euWarehouse?: boolean;

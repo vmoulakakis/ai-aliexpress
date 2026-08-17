@@ -1,13 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { ProductImageProxy } from "@/components/product-image-proxy";
 import { V4ActivityToast } from "@/components/v4-activity-toast";
-import "./globals.css";
-import "./v4.css";
-import "./v4-stage2.css";
-import "./v4-stage4.css";
-import "./v4-stage5.css";
-import "./v4-stage5-extra.css";
-import "./v4-overrides.css";
+import "./aigora.css";
 
 export const metadata: Metadata = {
   title: { default: "AIgora — AI που διαβάζει την αγορά πριν αγοράσεις", template: "%s · AIgora" },

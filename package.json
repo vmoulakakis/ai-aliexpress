@@ -1,6 +1,6 @@
 {
   "name": "eu-scout",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,11 +10,13 @@
   },
   "dependencies": {
     "next": "16.2.12",
+    "qrcode": "^1.5.4",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "@types/qrcode": "^1.5.5",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "typescript": "^5.9.0"

@@ -1,0 +1,99 @@
+name: V4 Demand Commerce Quality Gate
+
+on:
+  push:
+    branches: ['v4-demand-commerce']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v4-demand-commerce-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Install app
+        run: npm install --no-audit --no-fund
+      - name: Install test helpers
+        run: npm install --no-save --no-audit --no-fund playwright tsx
+      - name: Resolve installed Chrome
+        shell: bash
+        run: |
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$CHROME" ]; then echo 'No preinstalled Chrome found'; exit 1; fi
+          echo "CHROME_PATH=$CHROME" >> "$GITHUB_ENV"
+      - name: Semantic 1000-user simulation
+        run: npx tsx scripts/v4-semantic-sim.ts
+      - name: Server EU proof to official affiliate bridge
+        run: node scripts/v4-retail-affiliate-probe.mjs
+      - name: Joined V4 live search hard gate
+        run: node scripts/v4-live-search.mjs
+      - name: Supabase EU warehouse edge discovery
+        run: node scripts/v4-eu-edge-probe.mjs
+      - name: Stage4 engagement and tracking live gate
+        run: node scripts/v4-engagement-live.mjs
+      - name: Stage5 truthful activity live gate
+        run: node scripts/v4-activity-live.mjs
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Diagnostic raw AliExpress browser probe
+        continue-on-error: true
+        run: node scripts/v4-eu-page-probe.mjs
+      - name: Start Next.js locally
+        shell: bash
+        run: |
+          npm start -- -p 4173 > /tmp/v4.log 2>&1 &
+          echo $! > /tmp/v4.pid
+          for i in {1..45}; do
+            if curl -fsS http://127.0.0.1:4173 >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/v4.log
+          exit 1
+      - name: Stage4 first-party routes
+        shell: bash
+        run: |
+          RESEARCH=$(node -p "require('./v4-artifacts/stage4-research.json').researchToken")
+          OUTBOUND=$(node -p "require('./v4-artifacts/stage4-research.json').outboundToken")
+          curl -fsS "http://127.0.0.1:4173/brief/$RESEARCH" -o /tmp/brief.html
+          grep -q "Η έρευνά σου" /tmp/brief.html
+          curl -sS -D /tmp/go.headers -o /dev/null "http://127.0.0.1:4173/go/$OUTBOUND?source=ci-route"
+          grep -qi '^location: https://s.click.aliexpress.com/' /tmp/go.headers
+      - name: Stage5 decision and compare routes
+        shell: bash
+        run: |
+          RESEARCH=$(node -p "require('./v4-artifacts/stage4-research.json').researchToken")
+          PRODUCT=1005012926698211
+          curl -fsS "http://127.0.0.1:4173/product/$RESEARCH/$PRODUCT" -o /tmp/product.html
+          grep -q "Γιατί ξεχώρισε" /tmp/product.html
+          grep -q "EU WAREHOUSE PROOF" /tmp/product.html
+          curl -fsS "http://127.0.0.1:4173/compare/$RESEARCH?ids=$PRODUCT" -o /tmp/compare.html
+          grep -q "Σύγκρινε όσα πραγματικά" /tmp/compare.html
+      - name: Browser acceptance smoke
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node scripts/v4-browser-smoke.mjs
+      - name: Upload V4 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v4-demand-commerce-artifacts
+          path: |
+            v4-artifacts/*
+            package-lock.json
+          if-no-files-found: warn
+          retention-days: 7

@@ -17,7 +17,7 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -44,6 +44,8 @@ jobs:
         run: node scripts/v4-eu-edge-probe.mjs
       - name: Stage4 engagement and tracking live gate
         run: node scripts/v4-engagement-live.mjs
+      - name: Stage5 truthful activity live gate
+        run: node scripts/v4-activity-live.mjs
       - name: Typecheck
         run: npm run typecheck
       - name: Build
@@ -71,6 +73,16 @@ jobs:
           grep -q "Η έρευνά σου" /tmp/brief.html
           curl -sS -D /tmp/go.headers -o /dev/null "http://127.0.0.1:4173/go/$OUTBOUND?source=ci-route"
           grep -qi '^location: https://s.click.aliexpress.com/' /tmp/go.headers
+      - name: Stage5 decision and compare routes
+        shell: bash
+        run: |
+          RESEARCH=$(node -p "require('./v4-artifacts/stage4-research.json').researchToken")
+          PRODUCT=1005012926698211
+          curl -fsS "http://127.0.0.1:4173/product/$RESEARCH/$PRODUCT" -o /tmp/product.html
+          grep -q "Γιατί ξεχώρισε" /tmp/product.html
+          grep -q "EU WAREHOUSE PROOF" /tmp/product.html
+          curl -fsS "http://127.0.0.1:4173/compare/$RESEARCH?ids=$PRODUCT" -o /tmp/compare.html
+          grep -q "Σύγκρινε όσα πραγματικά" /tmp/compare.html
       - name: Browser acceptance smoke
         env:
           BASE_URL: http://127.0.0.1:4173

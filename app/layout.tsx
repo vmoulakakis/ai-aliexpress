@@ -1,9 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { ProductImageProxy } from "@/components/product-image-proxy";
+import { V4ActivityToast } from "@/components/v4-activity-toast";
 import "./globals.css";
 import "./v4.css";
 import "./v4-stage2.css";
 import "./v4-stage4.css";
+import "./v4-stage5.css";
+import "./v4-stage5-extra.css";
 import "./v4-overrides.css";
 
 export const metadata: Metadata = {
@@ -12,4 +15,4 @@ export const metadata: Metadata = {
   applicationName: "ΒρεςΜου", category: "shopping", robots: { index: true, follow: true },
 };
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", colorScheme: "light", themeColor: "#ffffff" };
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) { return <html lang="el"><body><ProductImageProxy />{children}</body></html>; }
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) { return <html lang="el"><body><ProductImageProxy />{children}<V4ActivityToast /></body></html>; }

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { ProductImageProxy } from "@/components/product-image-proxy";
 import "./globals.css";
 import "./v4.css";
+import "./v4-overrides.css";
 
 export const metadata: Metadata = {
   title: {

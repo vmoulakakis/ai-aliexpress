@@ -27,7 +27,7 @@ try {
 
   const input = desktop.getByRole("textbox", { name: "AI semantic αναζήτηση" });
   await input.fill("εργονομική καρέκλα γραφείου μέχρι 180 ευρώ");
-  await desktop.getByRole("button", { name: /Ρώτα το AI/ }).click();
+  await desktop.locator(".hero-search .search-submit").click();
   await desktop.locator("#results.visible").waitFor({ timeout: 45000 });
   await desktop.waitForFunction(() => {
     return document.querySelectorAll(".result-card").length > 0 || Boolean(document.querySelector(".empty-state")) || Boolean(document.querySelector(".error-box"));

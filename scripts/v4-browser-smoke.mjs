@@ -46,7 +46,7 @@ for (const viewport of [{ width: 1440, height: 1000, name: "desktop" }, { width:
   const input = page.getByRole("textbox", { name: "AI semantic αναζήτηση" });
   await input.fill("τρίχες σκύλου παντού, έως 300 ευρώ");
   await expect(await page.locator(".semantic-suggestions button").count() > 0, "semantic suggestions missing");
-  await page.getByRole("button", { name: /Ρώτα το AI/ }).click();
+  await page.locator(".hero-search .search-submit").click();
   await page.locator(".tracked-cta").first().waitFor({ state: "visible", timeout: 5000 });
   await expect(await page.locator(".result-card").count() === 3, "results not rendered");
   await expect(searchBodies.some((body) => String(body.message || "").includes("αποθήκη ΕΕ")), "EU-only phrase missing");

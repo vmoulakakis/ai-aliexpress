@@ -1,46 +1,78 @@
-# NHMA AI Scout — Production Status
+# AIgora — Production Status
 
-Last acceptance pass: 2026-08-14
+Last release pass: 2026-08-17
+
+## Production identity
+
+- Brand: **AIgora**
+- Positioning: AI demand intelligence + semantic shopping assistant for Greece / EU.
+- Trust policy: EU warehouse evidence first, hard budget and identity gates, no irrelevant filler, explicit affiliate disclosure.
 
 ## Live architecture
 
-- `nhma-chat` — independent conversation endpoint with persistent server-side memory.
-- `nhma-intent` — product intent and constraints layer.
-- `nhma-search` — live retrieval, hard constraints, product-identity validation and ranking.
-- `aliexpress-affiliate` — live AliExpress affiliate retrieval.
+### Frontend
+
+- Production fallback host: `https://project25955.websitepublisher.ai`
+- Hosting status: **published**
+- WebsitePublisher project: `25955`
+- Public pages include homepage, needs, premium, methodology, privacy, affiliate disclosure, buying brief and tracked redirect.
+- Shared design system: Sora + Manrope, deep-indigo / EU-trust palette.
+
+### Supabase / AI shopping backend
+
+Project: `bgvgstpoypqbjnemqcqp`
+
+- `nhma-search-v4` — canonical demand/search pipeline, EU evidence discovery, official product detail validation, hard budget + identity gates.
+- `nhma-engagement-v4` — persistent research objects, first-party outbound tokens, engagement events and leads.
+- `aliexpress-affiliate` — official AliExpress affiliate product search/detail/link generation.
+- `nhma-intent` — intent and constraints fallback layer.
 - `nhma-health` — safe capability status.
-- `index.html` — browser UI source of truth.
-- `.github/workflows/publish-nhma.yml` — automatic UI artifact publishing after frontend changes.
 
-## Acceptance checks passed
+## Release gates passed
 
-- Independent chat and Smart Search use separate endpoints.
-- Stable session ID persists across search and chat.
-- Server-side conversation memory survives multiple turns.
-- Greek / Greeklish product intent works in safe fallback mode.
-- Budget is enforced as a hard local constraint even when upstream results violate it.
-- Office-chair search rejects footrests, cushions, pads, parts, implausible low-price variants and unrelated stools/saddles.
-- Robot-vacuum search rejects parts, hooks, pool/window cleaners and sub-€20 accessory contamination when a whole appliance was requested.
-- If no relevant whole-product result survives, the API returns an empty product list rather than irrelevant filler.
-- Camera/photo UI exists and sends image data to the search endpoint.
-- Product UI renders only fields returned by the backend and does not fabricate stock, shipping, delivery, EU warehouse, warranty or review facts.
-- GitHub publish workflow completed successfully after setup.
-- Temporary diagnostic Edge Functions were locked behind JWT / deprecated after testing.
+- TypeScript / production build gate passed before merge.
+- 1000 / 1000 semantic simulation cases passed.
+- EU warehouse proof gate passed.
+- Official AliExpress affiliate bridge passed.
+- Truthful activity policy passed: synthetic CI events are not exposed as social proof.
+- Hard budget and whole-product identity rules passed.
+- Recovery returns zero relevant results instead of filler when no product survives all gates.
+- Browser acceptance / duplicated selector failures were corrected before merge.
+- AIgora brand and EU-first hero were applied before release.
+- Public WebsitePublisher homepage was fetched successfully by the hosting network after publish.
 
-## Current provider state
+## GitHub source of truth
 
-The application is wired for:
+Repository: `vmoulakakis/ai-aliexpress`
 
-`DeepSeek V4-Pro + thinking -> optional OpenAI fallback -> safe deterministic fallback`
+The Next.js AIgora implementation remains the canonical application source in `main`.
 
-At the time of this acceptance pass, no live DeepSeek/OpenAI/Kimi provider credential was available in either inspected Supabase runtime. The application therefore correctly remains in safe deterministic fallback mode rather than claiming an LLM call occurred.
+The WebsitePublisher deployment is a static-hosting-compatible production fallback using the same Supabase / AliExpress backend while the Vercel deployment connector is unable to create a persistent project/deployment record in the connected Vercel account.
 
-No provider secret is committed to this repository.
+## Vercel status
 
-## Current image-search state
+- Connected Vercel team previously reported **0 projects**.
+- Multiple production initialization attempts returned deployment IDs but immediately became non-resolvable / 404 before project creation.
+- The failure reproduced with both commit-bootstrap and self-contained inline source, isolating the problem to the deployment connector/project-creation path rather than the AIgora build.
+- No duplicate active Vercel production project was left behind.
 
-The AliExpress live integration is configured. Direct AliExpress image-search activation still depends on the required server-side image-search credential/signature. Until present, photo flow degrades safely and asks for minimal textual identification instead of generating fake matches.
+## Buying brief / email state on fallback hosting
 
-## Production UI
+- Buying briefs are available through the public `brief.html?t=<research-token>` flow.
+- Tracked outbound redirects use `go.html?t=<outbound-token>`.
+- Lead capture remains active through `nhma-engagement-v4` and marketing consent stays separate.
+- Automatic transactional email delivery is intentionally disabled from the WebsitePublisher fallback frontend because the existing Edge email template still emits the original path-style `/brief/<token>` URL. This prevents sending a broken link.
 
-`https://nhma-ai-scout-vassilis-projects-3bf8541b.vercel.app`
+## Security / disclosure gate
+
+- No API secrets are present in browser assets.
+- Client code contains only public Supabase Edge Function URLs.
+- No admin/customer database is exposed from WebsitePublisher.
+- Remote product text is escaped before rendering.
+- Lead email validation and rate limiting are server-side.
+- Affiliate and privacy pages are live.
+- Affiliate commission is not used as a relevance ranking factor.
+
+## Next hosting action
+
+When the Vercel connector/project-creation issue is resolved, deploy the canonical Next.js `main` once to Vercel and then retire or redirect the WebsitePublisher fallback. Do not create parallel duplicate production projects.

@@ -1,15 +1,15 @@
 import type { Metadata, Viewport } from "next";
 import { ProductImageProxy } from "@/components/product-image-proxy";
 import "./globals.css";
-import "./v3.css";
+import "./v4.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "EU Scout — Έξυπνος οδηγός αγορών",
-    template: "%s · EU Scout",
+    default: "ΒρεςΜου — AI αγορές με νόημα",
+    template: "%s · ΒρεςΜου",
   },
-  description: "Βρες γρήγορα σχετικές επιλογές προϊόντων με semantic Smart Search, αυστηρό budget και ξεχωριστό AI σύμβουλο αγορών.",
-  applicationName: "EU Scout",
+  description: "AI demand intelligence και semantic shopping για πραγματικές ανάγκες, premium λύσεις και προϊόντα με έμφαση σε αποθήκες ΕΕ.",
+  applicationName: "ΒρεςΜου",
   category: "shopping",
   robots: { index: true, follow: true },
 };
@@ -19,7 +19,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   colorScheme: "light",
-  themeColor: "#f5f1e7",
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -1,9 +1,7 @@
-import { CommerceShell } from "@/components/commerce-shell";
+import { V4Home } from "@/components/v4-home";
 
 export const dynamic = "force-dynamic";
 
 export default function Page() {
-  const month = new Date().getUTCMonth() + 1;
-  const season = month >= 7 && month <= 9 ? "bts" : "general";
-  return <CommerceShell season={season} />;
+  return <V4Home />;
 }

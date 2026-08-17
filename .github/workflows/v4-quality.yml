@@ -1,0 +1,67 @@
+name: V4 Demand Commerce Quality Gate
+
+on:
+  push:
+    branches:
+      - 'v4-demand-commerce'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v4-demand-commerce-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Install app
+        run: npm install --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Install Playwright smoke dependency
+        run: npm install --no-save --no-audit --no-fund playwright
+      - name: Resolve installed Chrome
+        shell: bash
+        run: |
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$CHROME" ]; then echo 'No preinstalled Chrome found'; exit 1; fi
+          echo "CHROME_PATH=$CHROME" >> "$GITHUB_ENV"
+      - name: Start Next.js locally
+        shell: bash
+        run: |
+          npm start -- -p 4173 > /tmp/v4.log 2>&1 &
+          echo $! > /tmp/v4.pid
+          for i in {1..45}; do
+            if curl -fsS http://127.0.0.1:4173 >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/v4.log
+          exit 1
+      - name: Browser acceptance smoke
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node scripts/v4-browser-smoke.mjs
+      - name: Upload V4 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v4-demand-commerce-artifacts
+          path: |
+            v4-artifacts/*
+            package-lock.json
+          if-no-files-found: warn
+          retention-days: 7

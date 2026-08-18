@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./photo-design.css";
 
 export const metadata: Metadata = {
   title: "Λύσεις ΕΕ — AI sourcing από αποθήκες Ευρώπης",

@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://bgvgstpoypqbjnemqcqp.supabase.co";
 
 export async function GET(req: NextRequest) {
-  if (!supabaseUrl) return NextResponse.json({ items: [], error: "search_not_configured" }, { status: 503 });
   const p = req.nextUrl.searchParams;
   const payload = p.get("b2b") === "1"
     ? { mode: "b2b" }

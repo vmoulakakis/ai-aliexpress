@@ -1,0 +1,9 @@
+CREATE INDEX IF NOT EXISTS sf_solutions_pain_fk_idx ON public.sf_solutions(pain_id);
+CREATE INDEX IF NOT EXISTS sf_offers_product_fk_idx ON public.sf_offers(product_id);
+CREATE INDEX IF NOT EXISTS sf_offers_merchant_fk_idx ON public.sf_offers(merchant_id);
+CREATE INDEX IF NOT EXISTS sf_candidates_run_fk_idx ON public.sf_candidates(run_id);
+CREATE INDEX IF NOT EXISTS sf_competitor_solution_fk_idx ON public.sf_competitor_checks(solution_id);
+CREATE INDEX IF NOT EXISTS sf_notifications_solution_fk_idx ON public.sf_notifications(solution_id);
+CREATE INDEX IF NOT EXISTS sf_notifications_offer_fk_idx ON public.sf_notifications(offer_id);
+CREATE INDEX IF NOT EXISTS sf_outcomes_solution_fk_idx ON public.sf_outcomes(solution_id);
+CREATE INDEX IF NOT EXISTS sf_outcomes_offer_fk_idx ON public.sf_outcomes(offer_id);

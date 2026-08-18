@@ -5,8 +5,7 @@ export async function GET(req: NextRequest) {
   if (secret && req.headers.get("authorization") !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!url) return NextResponse.json({ error: "supabase_not_configured" }, { status: 503 });
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://bgvgstpoypqbjnemqcqp.supabase.co";
   const response = await fetch(`${url}/functions/v1/foundry-nightshift`, {
     method: "POST",
     headers: { "content-type": "application/json" },

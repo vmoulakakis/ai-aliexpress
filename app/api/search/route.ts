@@ -4,13 +4,13 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://bgvgstpoypq
 
 export async function GET(req: NextRequest) {
   const p = req.nextUrl.searchParams;
-  const payload = p.get("b2b") === "1"
-    ? { mode: "b2b" }
-    : p.get("featured") === "1"
-      ? { mode: "featured" }
-      : { mode: "search", q: (p.get("q") || "").trim().slice(0, 700) };
+  const q = (p.get("q") || "").trim().slice(0, 700);
+  let payload: { mode: "search" | "featured" | "b2b"; q?: string };
+  if (p.get("b2b") === "1") payload = { mode: "b2b" };
+  else if (p.get("featured") === "1") payload = { mode: "featured" };
+  else payload = { mode: "search", q };
 
-  if (payload.mode === "search" && (!payload.q || payload.q.length < 2)) return NextResponse.json({ items: [] });
+  if (payload.mode === "search" && q.length < 2) return NextResponse.json({ items: [] });
 
   const response = await fetch(`${supabaseUrl}/functions/v1/foundry-search`, {
     method: "POST",

@@ -1,5 +1,1 @@
-{
-  "crons": [
-    { "path": "/api/nightshift", "schedule": "30 0 * * *" }
-  ]
-}
+{}

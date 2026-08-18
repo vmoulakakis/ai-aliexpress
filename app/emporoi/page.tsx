@@ -1,63 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-type Opportunity = {
-  id: string;
-  pain_title: string;
-  solution_title: string;
-  demand_score: number | null;
-  local_gap_score: number | null;
-  merchant_score: number | null;
-  margin_pct: number | null;
-  warehouse_country: string | null;
-  delivery_days: number | null;
-  price_eur: number | null;
-  affiliate_url: string | null;
-};
+type Opportunity={id:string;solution_id:string;pain_title:string;solution_title:string;stage:"lab"|"core";demand_score:number|null;local_gap_score:number|null;opportunity_score:number|null;merchant_score:number|null;margin_pct:number|null;warehouse_country:string|null;delivery_days:number|null;price_eur:number|null;discount_pct:number|null;affiliate_url:string|null};
+type Merchant={id:string;ali_shop_id:string;name:string|null;merchant_score:number|null;eu_stock_reliability:number|null;product_survival_rate:number|null;outcome_success_rate:number|null;specializations:any;last_seen_at:string|null};
+const money=(v:number|null)=>v?new Intl.NumberFormat("el-GR",{style:"currency",currency:"EUR"}).format(v):"—";
+const country=(v:string|null)=>v?({ES:"Ισπανία",PL:"Πολωνία",FR:"Γαλλία",DE:"Γερμανία",IT:"Ιταλία",CZ:"Τσεχία",NL:"Ολλανδία"}[v]||v):"ΕΕ";
 
-export default function MerchantsPage() {
-  const [items, setItems] = useState<Opportunity[]>([]);
-  const [q, setQ] = useState("");
+export default function MerchantsPage(){
+  const [items,setItems]=useState<Opportunity[]>([]);const [merchants,setMerchants]=useState<Merchant[]>([]);const [q,setQ]=useState("");const [filter,setFilter]=useState<"all"|"core"|"lab">("all");
+  useEffect(()=>{Promise.all([fetch("/api/search?mode=b2b").then(r=>r.json()),fetch("/api/search?mode=merchants").then(r=>r.json())]).then(([a,b])=>{setItems(Array.isArray(a.items)?a.items:[]);setMerchants(Array.isArray(b.items)?b.items:[]);}).catch(()=>{});},[]);
+  const visible=useMemo(()=>items.filter(x=>(filter==="all"||x.stage===filter)&&(!q||`${x.pain_title} ${x.solution_title}`.toLowerCase().includes(q.toLowerCase()))),[items,q,filter]);
+  const core=items.filter(x=>x.stage==="core").length,lab=items.filter(x=>x.stage==="lab").length;
 
-  useEffect(() => {
-    fetch("/api/search?b2b=1").then((r) => r.json()).then((d) => setItems(d.items ?? [])).catch(() => undefined);
-  }, []);
+  return <main>
+    <header className="topbar"><div className="shell nav"><a className="brand" href="/"><span className="brandMark">Λ</span><span>Λύσεις <b>ΕΕ</b></span></a><nav><a href="/">Για καταναλωτές</a><a href="#radar">Ευκαιρίες</a><a href="#emporoi">Top έμποροι</a></nav><div className="euBadge">B2B · Ελλάδα</div></div></header>
 
-  const visible = items.filter((x) => !q || `${x.pain_title} ${x.solution_title}`.toLowerCase().includes(q.toLowerCase()));
+    <section className="merchantHero shell">
+      <div className="merchantHeroCopy"><div className="eyebrow"><span className="dot"/> AI SOURCING ΓΙΑ ΕΛΛΗΝΕΣ ΕΜΠΟΡΟΥΣ</div><h1>Τι αξίζει να <span>πουλήσεις;</span></h1><p>Δεν σου δείχνουμε “trending gadgets”. Το B2B Radar ξεκινά από ελληνικό πρόβλημα, ψάχνει supply στο AliExpress, απαιτεί αποθήκη ΕΕ και βαθμολογεί τον seller πριν υπολογίσει την εμπορική ευκαιρία.</p><div className="merchantSearch"><span>⌕</span><input value={q} onChange={e=>setQ(e.target.value)} placeholder="π.χ. παλιά αυτοκίνητα, κατοικίδια, μικροί χώροι"/><button onClick={()=>document.getElementById("radar")?.scrollIntoView({behavior:"smooth"})}>Δες Radar</button></div></div>
+      <aside className="b2bSummary"><small>ΣΗΜΕΡΙΝΗ ΕΙΚΟΝΑ</small><div className="b2bSummaryGrid"><div><b>{core}</b><span>Επιβεβαιωμένες ευκαιρίες</span></div><div><b>{lab}</b><span>LAB σε ελληνικό έλεγχο</span></div><div><b>{merchants.length}</b><span>Top merchants στο feed</span></div><div><b>ΕΕ</b><span>Μόνο warehouse proof</span></div></div><p>Το “LAB” είναι σκόπιμο: το προϊόν πέρασε sourcing/ποιότητα/EU, αλλά δεν βαφτίζεται εμπορικό gap πριν τελειώσει ο έλεγχος Ελλάδας.</p></aside>
+    </section>
 
-  return (
-    <main>
-      <header className="nav shell">
-        <a className="brand" href="/">Λύσεις <span>ΕΕ</span></a>
-        <nav><a href="/">Για καταναλωτές</a><a href="#radar">Ευκαιρίες</a></nav>
-        <div className="euBadge">B2B · Ελλάδα</div>
-      </header>
+    <section className="shell b2bRadar" id="radar">
+      <div className="sectionTitle"><div><small>ΕΥΚΑΙΡΙΕΣ SOURCING</small><h2>Από το πρόβλημα στο προϊόν και στον seller.</h2></div><div className="segmented"><button className={filter==="all"?"active":""} onClick={()=>setFilter("all")}>Όλα</button><button className={filter==="core"?"active":""} onClick={()=>setFilter("core")}>Επιβεβαιωμένα</button><button className={filter==="lab"?"active":""} onClick={()=>setFilter("lab")}>Σε έλεγχο</button></div></div>
+      {!visible.length?<div className="honestEmpty"><span>🌙</span><div><strong>Δεν έχει δημοσιευτεί ακόμη B2B opportunity με αυτά τα φίλτρα.</strong><p>Το NightShift δεν γεμίζει τη λίστα με filler προϊόντα.</p></div></div>:<div className="b2bGrid">{visible.map(x=><article className="oppCard" key={x.id}><div className="oppTop"><span className={x.stage==="core"?"statusCore":"statusLab"}>{x.stage==="core"?"✓ ΕΠΙΒΕΒΑΙΩΜΕΝΟ":"◌ ΣΕ ΕΛΕΓΧΟ"}</span><span>🇪🇺 {country(x.warehouse_country)}</span></div><span className="oppPain">{x.pain_title}</span><h3>{x.solution_title}</h3><div className="metricGrid"><div><small>Opportunity</small><b>{x.opportunity_score?Math.round(x.opportunity_score):"—"}</b></div><div><small>Ελληνικό Gap</small><b>{x.local_gap_score?Math.round(x.local_gap_score):"—"}</b></div><div><small>Merchant</small><b>{x.merchant_score?Math.round(x.merchant_score):"—"}</b></div><div><small>Margin signal</small><b>{x.margin_pct?`${Math.round(x.margin_pct)}%`:"—"}</b></div></div><div className="oppCommercial"><div>{x.discount_pct&&x.discount_pct>=5?<span className="discountBadge static">-{Math.round(x.discount_pct)}%</span>:null}<strong>{money(x.price_eur)}</strong></div><span>{x.delivery_days?`${x.delivery_days} ημέρες`:"EU warehouse"}</span></div>{x.stage==="core"&&x.affiliate_url?<a className="oppCta" href={x.affiliate_url} target="_blank" rel="sponsored noopener noreferrer">Δες sourcing offer →</a>:<div className="oppWaiting">Δεν ανοίγουμε affiliate link πριν γίνει CORE.</div>}</article>)}</div>}
+    </section>
 
-      <section className="merchantHero shell">
-        <div>
-          <div className="eyebrow">AI SOURCING ΓΙΑ ΕΛΛΗΝΕΣ ΕΜΠΟΡΟΥΣ</div>
-          <h1>Βρες τι αξίζει<br/><span>να πουλήσεις.</span></h1>
-          <p>Το NightShift εντοπίζει λύσεις με ελληνική ζήτηση, πραγματικό κενό αγοράς, EU stock και δυνατούς merchants — πριν γίνουν commodity.</p>
-          <div className="merchantSearch"><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="π.χ. λύσεις για παλιά αυτοκίνητα, κατοικίδια, μικρούς χώρους"/><button>AI Radar</button></div>
-        </div>
-        <div className="b2bPanel">
-          <small>ΤΙ ΒΑΘΜΟΛΟΓΟΥΜΕ</small>
-          <div className="scoreRows"><span>Ζήτηση στην Ελλάδα</span><b>Demand Score</b><span>Έλλειψη αντίστοιχης λύσης</span><b>Gap Score</b><span>Ποιότητα εμπόρου</span><b>Merchant Score</b><span>Εμπορική ευκαιρία</span><b>Margin Signal</b></div>
-        </div>
-      </section>
+    <section className="merchantSection" id="emporoi"><div className="shell"><div className="sectionTitle"><div><small>MERCHANT INTELLIGENCE</small><h2>Δεν βαθμολογούμε μόνο προϊόντα. Μαθαίνουμε ποιος seller αξίζει.</h2></div><span className="sectionHint">Score ανά ιστορικό, EU evidence και survival.</span></div>{merchants.length?<div className="merchantTable"><div className="merchantRow merchantHeader"><span>Έμπορος</span><span>Score</span><span>EU αξιοπιστία</span><span>CORE survival</span><span>Τελευταίο σήμα</span></div>{merchants.slice(0,12).map((m,i)=><div className="merchantRow" key={m.id}><span><b>#{i+1}</b><strong>{m.name||`Έμπορος #${m.ali_shop_id.slice(-6)}`}</strong></span><span className="scorePill">{m.merchant_score?Math.round(m.merchant_score):"—"}</span><span>{m.eu_stock_reliability!=null?`${Math.round(m.eu_stock_reliability)}%`:"Μαθαίνεται"}</span><span>{m.product_survival_rate!=null?`${Math.round(m.product_survival_rate)}%`:"Δεν υπάρχει ακόμη ιστορικό"}</span><span>{m.last_seen_at?new Date(m.last_seen_at).toLocaleDateString("el-GR"):"—"}</span></div>)}</div>:<div className="honestEmpty"><span>🛡️</span><div><strong>Το Merchant Graph γεμίζει μόνο από πραγματικά verified offers.</strong><p>Δεν δημιουργούμε “top sellers” χωρίς δικό μας ιστορικό.</p></div></div>}</div></section>
 
-      <section className="shell b2bTableWrap" id="radar">
-        <div className="sectionTitle"><div><small>OPPORTUNITY RADAR</small><h2>Ευκαιρίες που περνούν τα gates μας</h2></div></div>
-        {!visible.length ? <div className="b2bEmpty">Το NightShift δεν έχει δημοσιεύσει ακόμη ελεγμένες B2B ευκαιρίες. Δεν εμφανίζουμε placeholder ή μη επαληθευμένα προϊόντα.</div> :
-          <div className="b2bGrid">{visible.map((x) => <article className="oppCard" key={x.id}>
-            <div className="oppTop"><span>🔥 Ευκαιρία</span><span>🇪🇺 {x.warehouse_country ?? "ΕΕ"}</span></div>
-            <h3>{x.solution_title}</h3><p>{x.pain_title}</p>
-            <div className="metrics"><div><small>Ζήτηση</small><b>{x.demand_score ? Math.round(x.demand_score) : "—"}</b></div><div><small>Gap</small><b>{x.local_gap_score ? Math.round(x.local_gap_score) : "—"}</b></div><div><small>Merchant</small><b>{x.merchant_score ? Math.round(x.merchant_score) : "—"}</b></div><div><small>Margin</small><b>{x.margin_pct ? `${Math.round(x.margin_pct)}%` : "—"}</b></div></div>
-            <div className="oppFoot"><span>{x.price_eur ? `Από €${x.price_eur.toFixed(2)}` : "Τιμή live"}</span><span>{x.delivery_days ? `${x.delivery_days} ημέρες` : "EU delivery"}</span></div>
-            {x.affiliate_url ? <a href={x.affiliate_url} target="_blank" rel="sponsored noopener noreferrer">Δες sourcing offer →</a> : null}
-          </article>)}</div>}
-      </section>
-    </main>
-  );
+    <section className="b2bRules shell"><div><small>ΤΟ RANKING</small><h2>Πρώτα αξία για τον πελάτη. Μετά εμπορική απόδοση.</h2></div><div className="rulesGrid"><span><b>1</b> Relevance / Pain Fit</span><span><b>2</b> Product Quality</span><span><b>3</b> Merchant Quality</span><span><b>4</b> EU Evidence</span><span><b>5</b> Greek Gap</span><span><b>6</b> Μόνο μετά: commission</span></div></section>
+    <footer><div className="shell footerInner"><div className="brand"><span className="brandMark">Λ</span><span>Λύσεις <b>ΕΕ</b></span></div><p>EU Solution Foundry · B2B sourcing για την Ελλάδα</p><a href="/admin">Κατάσταση συστήματος</a></div></footer>
+  </main>;
 }

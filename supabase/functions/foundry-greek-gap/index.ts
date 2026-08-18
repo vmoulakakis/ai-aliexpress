@@ -1,0 +1,56 @@
+const SUPABASE_URL=Deno.env.get("SUPABASE_URL")!;
+const SERVICE_KEY=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/151 Safari/537.36";
+
+async function db(path:string,init:RequestInit={}){return fetch(`${SUPABASE_URL}/rest/v1/${path}`,{...init,headers:{apikey:SERVICE_KEY,authorization:`Bearer ${SERVICE_KEY}`,"content-type":"application/json",prefer:"return=representation",...(init.headers||{})}});}
+function text(v:unknown){return String(v??"").replace(/\\u003c/g,"<").replace(/\\u003e/g,">").replace(/\\u0026/g,"&").replace(/\\\"/g,'"').replace(/\s+/g," ").trim();}
+const STOP=new Set(["with","for","and","the","new","wireless","portable","smart","home","car","pro","plus","mini","2025","2026"]);
+function tokens(v:string){return [...new Set(text(v).toLowerCase().replace(/[^a-z0-9α-ωάέήίόύώϊϋΐΰ]+/gi," ").split(/\s+/).filter(x=>x.length>=4&&!STOP.has(x)))];}
+function similarity(a:string,b:string){const A=tokens(a),B=tokens(b);if(!A.length||!B.length)return 0;const setB=new Set(B),hit=A.filter(x=>setB.has(x)).length;return hit/Math.min(A.length,B.length);}
+function parsePrice(raw:string){const n=Number(raw.replace(/\./g,"").replace(",","."));return Number.isFinite(n)&&n>=3&&n<=10000?n:null;}
+function extractCards(html:string){
+  const cards:{title:string;price:number|null}[]=[];const seen=new Set<string>();
+  const patterns=[/"name"\s*:\s*"([^"\\]{7,220})"/gi,/data-testid=["'][^"']*product[^"']*["'][^>]*>[\s\S]{0,800}?<a[^>]*>([^<]{7,220})<\/a>/gi,/class=["'][^"']*(?:product|card)[^"']*["'][^>]*>[\s\S]{0,900}?title=["']([^"']{7,220})["']/gi];
+  for(const re of patterns){let m:RegExpExecArray|null;while((m=re.exec(html))&&cards.length<100){const title=text(m[1]);if(!title||seen.has(title.toLowerCase()))continue;seen.add(title.toLowerCase());const around=html.slice(Math.max(0,m.index-300),Math.min(html.length,m.index+1200));const pm=around.match(/(?:price|lowPrice|finalPrice|currentPrice)[^0-9]{0,80}([0-9]{1,4}(?:[.,][0-9]{1,2})?)/i)||around.match(/([0-9]{1,4}(?:[.,][0-9]{1,2})?)\s*€/);cards.push({title,price:pm?parsePrice(pm[1]):null});}}
+  return cards;
+}
+async function market(source:"skroutz"|"bestprice",q:string){
+  const url=source==="skroutz"?`https://www.skroutz.gr/search?keyphrase=${encodeURIComponent(q)}`:`https://www.bestprice.gr/search?q=${encodeURIComponent(q)}`;
+  const c=new AbortController(),t=setTimeout(()=>c.abort(),12000);
+  try{const r=await fetch(url,{headers:{"user-agent":UA,"accept-language":"el-GR,el;q=0.9,en;q=0.7"},signal:c.signal,redirect:"follow"});const html=await r.text();const blocked=/captcha|access denied|unusual traffic|security check/i.test(html);const noResults=/δεν βρέθηκαν|δεν βρέθηκε|κανένα αποτέλεσμα|0\s+προϊόν|no results/i.test(html);return {source,url,ok:r.ok&&!blocked,status:r.status,noResults,cards:r.ok&&!blocked?extractCards(html):[]};}catch{return {source,url,ok:false,status:0,noResults:false,cards:[] as {title:string;price:number|null}[]};}finally{clearTimeout(t);}
+}
+
+Deno.serve(async req=>{
+  if(req.method!=="POST")return Response.json({error:"method_not_allowed"},{status:405});
+  const body=await req.json().catch(()=>({}));const limit=Math.max(1,Math.min(30,Number(body.limit)||16));
+  const sr=await db(`sf_solutions?select=id,source_key,title_el,survivor_score,pain_id,sf_products:sf_offers(product_id,price_eur,product:sf_products(canonical_title,capabilities))&stage=eq.lab&active=eq.true&order=survivor_score.desc.nullslast&limit=${limit}`);
+  let solutions=await sr.json();
+  if(!Array.isArray(solutions))solutions=[];
+  let checked=0,promoted=0,commodities=0,uncertain=0;
+  for(const s of solutions){
+    const offerRel=Array.isArray(s.sf_products)?s.sf_products[0]:null;const product=offerRel?.product;const productTitle=text(product?.canonical_title);const sourceQuery=text(product?.capabilities?.source_query);const q=sourceQuery||productTitle;
+    if(!q){uncertain++;continue;}
+    const markets=await Promise.all([market("skroutz",q),market("bestprice",q)]);checked++;
+    let equivalent=false,localMin:number|null=null,bestSim=0;
+    for(const mk of markets){
+      for(const card of mk.cards){const sim=Math.max(similarity(productTitle,card.title),similarity(q,card.title));bestSim=Math.max(bestSim,sim);if(sim>=0.58){equivalent=true;if(card.price!==null&&(localMin===null||card.price<localMin))localMin=card.price;}}
+      await db("sf_competitor_checks",{method:"POST",body:JSON.stringify({solution_id:s.id,source:mk.source,equivalent_found:mk.ok&&mk.cards.some(c=>Math.max(similarity(productTitle,c.title),similarity(q,c.title))>=0.58),min_price_eur:localMin,evidence:{url:mk.url,status:mk.status,no_results:mk.noResults,cards_checked:mk.cards.length,best_similarity:bestSim},checked_at:new Date().toISOString()})});
+    }
+    const aliPrice=Number(offerRel?.price_eur)||null;const allOk=markets.every(m=>m.ok),explicitNone=markets.every(m=>m.ok&&m.noResults);
+    let gapType:null|"true_gap"|"value_gap"|"commodity"=null,gapScore:number|null=null,nextStage="lab";
+    if(equivalent&&localMin&&aliPrice){const advantage=(localMin-aliPrice)/localMin;if(advantage>=0.35){gapType="value_gap";gapScore=Math.min(96,75+advantage*45);nextStage="core";}else if(advantage<=0.18){gapType="commodity";gapScore=Math.max(0,35+advantage*50);nextStage="archive";}}
+    else if(!equivalent&&allOk&&explicitNone){gapType="true_gap";gapScore=94;nextStage="core";}
+    if(gapType===null){uncertain++;continue;}
+    const finalScore=Math.round(((Number(s.survivor_score)||75)*.75+(gapScore||0)*.25)*10)/10;
+    await db(`sf_solutions?id=eq.${s.id}`,{method:"PATCH",body:JSON.stringify({stage:nextStage,gap_type:gapType,local_gap_score:gapScore,survivor_score:finalScore,updated_at:new Date().toISOString()})});
+    await db(`sf_b2b_opportunities?solution_id=eq.${s.id}`,{method:"PATCH",body:JSON.stringify({local_gap_score:gapScore,opportunity_score:finalScore,active:nextStage!=="archive",updated_at:new Date().toISOString()})});
+    await db("sf_agent_events",{method:"POST",body:JSON.stringify({agent_role:"greek-gap-marketmaker",subject_type:"solution",subject_key:s.source_key||s.id,decision:nextStage==="core"?"promote_core":"archive_commodity",reason_code:gapType,confidence:gapScore,evidence:{query:q,ali_price:aliPrice,local_min_price:localMin,markets:markets.map(m=>({source:m.source,status:m.status,no_results:m.noResults,cards:m.cards.length}))}})});
+    if(nextStage==="core"){
+      promoted++;
+      const or=await db(`sf_offers?select=id,discount_pct,affiliate_url&solution_id=eq.${s.id}&active=eq.true&eu_verified=eq.true&order=discount_pct.desc.nullslast&limit=1`);const offer=(await or.json())?.[0];
+      if(offer){await db(`sf_notifications?solution_id=eq.${s.id}&active=eq.true`,{method:"DELETE"});await db("sf_notifications",{method:"POST",body:JSON.stringify({audience:"b2c",solution_id:s.id,offer_id:offer.id,title_el:gapType==="true_gap"?"Νέα λύση που δεν βρήκαμε εύκολα στην ελληνική αγορά":"Μεγάλο πλεονέκτημα τιμής έναντι ελληνικής αγοράς",reason_el:gapType==="true_gap"?"Πέρασε ποιότητα, EU warehouse και διπλό ελληνικό gap check.":`Εντοπίστηκε ουσιαστική διαφορά τιμής με επαληθευμένο EU offer.`,priority:finalScore,expires_at:new Date(Date.now()+24*3600_000).toISOString()})});}
+      await db("sf_memory_items?on_conflict=kind,subject_key,content",{method:"POST",headers:{prefer:"resolution=ignore-duplicates,return=minimal"},body:JSON.stringify({kind:"fact",subject_key:s.source_key||s.id,content:`Η λύση πέρασε το ελληνικό gap gate ως ${gapType}.`,tags:["greece","gap",gapType],confidence:gapScore,source:"greek-gap-marketmaker"})});
+    }else{commodities++;}
+  }
+  return Response.json({ok:true,checked,promoted,commodities,uncertain});
+});

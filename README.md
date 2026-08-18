@@ -1,95 +1,44 @@
-# EU Scout V3
+# Λύσεις ΕΕ — EU Solution Foundry
 
-Greek-first AI shopping decision assistant built with **Next.js 16 + React 19 + TypeScript**, backed by live Supabase Edge Functions and the official AliExpress affiliate integration.
+Greek-first B2C + B2B agentic sourcing system for problem-solving products fulfilled from EU warehouses.
 
-## Product model
+## Product rule
+We do not expose a generic AliExpress catalog. A solution reaches `CORE` only after EU availability, product quality, merchant quality and Greek-market gap checks.
 
-EU Scout is not a generic e-shop and not a chat-only interface. It has two independent but interoperable tools:
+## Two engines
 
-```text
-Browser / Next.js
-├── Smart Search Agent
-│   └── /api/search → Supabase nhma-search → nhma-intent → AliExpress live
-└── AI Shopping Advisor
-    └── /api/chat → Supabase nhma-chat → persistent conversation memory
-                         └── invokes Smart Search when live products are needed
-```
+### 🌙 NightShift
+Heavy sourcing and evaluation happens offline: pain discovery → AliExpress sourcing → canonical products → merchant intelligence → EU gate → quality/red-team → Greek gap → CORE/LAB/WATCH.
 
-The same browser session UUID is shared by both paths, so search and chat can preserve user context without becoming the same UI.
+### ☀️ Day Search
+Fast Greek smart search with product dropdown. SQL retrieval first; DeepSeek only when deterministic retrieval is weak.
 
-## Current campaign experience
+## AI cost policy
+- No OpenAI provider in production routing.
+- `deepseek-v4-flash`: extraction/classification/intent.
+- `deepseek-v4-pro`: rare ambiguous or high-risk finalists only.
+- SQL/code gates before any LLM call.
+- Store model usage in `sf_model_usage`.
 
-From July through September the homepage uses a **Back-to-School campaign shell**:
+## Consumer UX
+One search box accepts product queries or human problems. Results are limited to verified survivors and show EU warehouse, delivery evidence, merchant score and affiliate disclosure.
 
-- grade selection
-- optional per-product budget
-- value / balanced / faster-delivery preference
-- demand families such as school carry, study setup, student tech, lunch/hydration and daily organization
-- one-click sub-needs that build a semantic query automatically
+## B2B UX
+`/emporoi` exposes opportunities scored by Greek demand, local gap, merchant strength and commercial margin signal.
 
-Outside the campaign window the shell switches to general shopping demand families. Free-text Smart Search remains general-purpose at all times.
+## Stack
+Next.js 16 + React 19 → Supabase PostgreSQL → AliExpress Affiliate API → DeepSeek V4. Deployment target: Vercel. Cloudflare Workers/OpenNext is the fallback option.
 
-## Decision and trust rules
-
-- explicit budget is a hard constraint, not a ranking hint
-- whole-product requests reject accessories/parts unless explicitly requested
-- zero relevant products is preferred over irrelevant filler
-- stock, EU warehouse, delivery, shipping, ratings and discounts are shown only when the live source supports them
-- external product links prefer the generated AliExpress affiliate promotion URL
-- affiliate links use `rel="sponsored noopener noreferrer"`
-- product images are relayed through a strict same-origin image proxy limited to approved AliExpress media hosts
-
-## Supabase runtime
-
-Primary project: `bgvgstpoypqbjnemqcqp`.
-
-Active application functions used by this frontend:
-
-- `nhma-search`
-- `nhma-intent`
-- `nhma-chat`
-- `nhma-health`
-- `aliexpress-affiliate`
-
-Persistent NHMA tables include conversations, messages, chat runs, search events, comparison runs, affiliate links and product snapshots.
-
-Provider credentials remain server-side in Supabase. The runtime health endpoint exposes only boolean configuration status; it never returns secret values.
-
-## Local development
-
+## Local setup
 ```bash
+cp .env.example .env.local
 npm install
 npm run typecheck
-npm run build
 npm run dev
 ```
 
-Optional environment override:
+## Database
+Canonical migration: `supabase/migrations/20260818_foundry_reset.sql`.
 
-```bash
-NHMA_FUNCTIONS_URL=https://<project>.supabase.co/functions/v1
-```
-
-When omitted, the app uses the production Supabase functions base configured in `lib/upstream.ts`.
-
-## Release gate
-
-`.github/workflows/eu-scout-v3.yml` runs on the V3 branch and must pass before deployment:
-
-1. install
-2. TypeScript check
-3. Next.js production build
-4. headless browser acceptance
-5. live Supabase health relay
-6. live general semantic search
-7. Back-to-School demand-family search
-8. independent two-turn chat continuity
-9. vertical chat product-card layout
-10. product-image proxy loading
-11. 390px mobile overflow check
-
-Visual screenshots and health evidence are uploaded as a CI artifact.
-
-## Deployment
-
-Deployment target: **Vercel**, after the release gate is green. The Vercel version should remain the exact implementation of this repository revision rather than a separately edited frontend.
+## Roles
+Operational agent contracts live in `docs/roles/`. Keep prompts small: load only the role needed for the current stage.

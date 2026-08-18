@@ -6,6 +6,7 @@ const ALLOWED=new Set(["AT","BE","BG","HR","CY","CZ","DE","DK","EE","ES","FI","F
 async function db(path:string,init:RequestInit={}){
   return fetch(`${SUPABASE_URL}/rest/v1/${path}`,{...init,headers:{apikey:SERVICE_KEY,authorization:`Bearer ${SERVICE_KEY}`,"content-type":"application/json",prefer:"return=representation",...(init.headers||{})}});
 }
+async function authorized(req:Request){const token=req.headers.get("x-foundry-token")||"";if(!token)return false;const r=await db("sf_internal_config?select=value&key=eq.job_token&limit=1");const rows=await r.json().catch(()=>[]);return Array.isArray(rows)&&token===rows[0]?.value;}
 function clean(v:unknown){return String(v??"").replace(/\s+/g," ").trim();}
 function slugQuery(q:string){return clean(q).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,105)||"products";}
 function decode(v:string){return v.replace(/&amp;/g,"&").replace(/&quot;/g,'"').replace(/&#39;/g,"'");}
@@ -39,48 +40,21 @@ async function fetchCountry(query:string,country:string){
 
 Deno.serve(async req=>{
   if(req.method!=="POST")return Response.json({error:"method_not_allowed"},{status:405});
+  if(!(await authorized(req)))return Response.json({error:"unauthorized"},{status:401});
   const body=await req.json().catch(()=>({}));
   let runId=clean(body.run_id);
-  if(!runId){
-    const rr=await db("sf_sourcing_runs?select=id,stats&status=in.(completed,partial)&order=created_at.desc&limit=1");
-    const rows=await rr.json(); runId=rows?.[0]?.id||"";
-  }
+  if(!runId){const rr=await db("sf_sourcing_runs?select=id,stats&status=in.(completed,partial)&order=created_at.desc&limit=1");const rows=await rr.json();runId=rows?.[0]?.id||"";}
   if(!runId)return Response.json({ok:false,error:"no_sourcing_run"},{status:404});
-
   const countries=(Array.isArray(body.countries)?body.countries:DEFAULT_COUNTRIES).map((x:unknown)=>clean(x).toUpperCase()).filter((x:string)=>ALLOWED.has(x)).slice(0,5);
-  const cr=await db(`sf_candidates?select=id,ali_product_id,source_payload&run_id=eq.${runId}&stage=eq.discovered&limit=4000`);
-  const candidates=await cr.json();
+  const cr=await db(`sf_candidates?select=id,ali_product_id,source_payload&run_id=eq.${runId}&stage=eq.discovered&limit=4000`);const candidates=await cr.json();
   const groups=new Map<string,{painId:string;query:string;candidateIds:Set<string>;rowIds:Map<string,number[]>}>();
-  for(const row of (Array.isArray(candidates)?candidates:[])){
-    const painId=clean(row?.source_payload?.pain_id),query=clean(row?.source_payload?.query),pid=clean(row?.ali_product_id);
-    if(!painId||!query||!/^\d+$/.test(pid))continue;
-    const key=`${painId}::${query}`;
-    if(!groups.has(key))groups.set(key,{painId,query,candidateIds:new Set(),rowIds:new Map()});
-    const g=groups.get(key)!; g.candidateIds.add(pid); if(!g.rowIds.has(pid))g.rowIds.set(pid,[]); g.rowIds.get(pid)!.push(Number(row.id));
-  }
-
+  for(const row of (Array.isArray(candidates)?candidates:[])){const painId=clean(row?.source_payload?.pain_id),query=clean(row?.source_payload?.query),pid=clean(row?.ali_product_id);if(!painId||!query||!/^\d+$/.test(pid))continue;const key=`${painId}::${query}`;if(!groups.has(key))groups.set(key,{painId,query,candidateIds:new Set(),rowIds:new Map()});const g=groups.get(key)!;g.candidateIds.add(pid);if(!g.rowIds.has(pid))g.rowIds.set(pid,[]);g.rowIds.get(pid)!.push(Number(row.id));}
   let requests=0,successfulRequests=0,proofs=0,verifiedCandidates=0;
   for(const g of groups.values()){
-    const results=await Promise.all(countries.map(c=>fetchCountry(g.query,c)));
-    requests+=results.length; successfulRequests+=results.filter(x=>x.ok).length;
-    const verifiedProductIds=new Set<string>();
-    const evidenceRows:any[]=[];
-    for(let i=0;i<results.length;i++){
-      const result=results[i],country=countries[i];
-      if(!result.ok)continue;
-      for(const [productId,hints] of result.products){
-        if(!g.candidateIds.has(productId))continue;
-        verifiedProductIds.add(productId); proofs++;
-        evidenceRows.push({run_id:runId,pain_id:g.painId,sourcing_query:g.query,ali_product_id:productId,warehouse_country:country,proof_url:result.proofUrl,verification_source:"aliexpress_explicit_ship_from_filter",title_hint:hints.titleHint,image_hint:hints.imageHint,verified_at:new Date().toISOString(),expires_at:new Date(Date.now()+24*3600_000).toISOString()});
-      }
-    }
+    const results=await Promise.all(countries.map(c=>fetchCountry(g.query,c)));requests+=results.length;successfulRequests+=results.filter(x=>x.ok).length;const verifiedProductIds=new Set<string>();const evidenceRows:any[]=[];
+    for(let i=0;i<results.length;i++){const result=results[i],country=countries[i];if(!result.ok)continue;for(const [productId,hints] of result.products){if(!g.candidateIds.has(productId))continue;verifiedProductIds.add(productId);proofs++;evidenceRows.push({run_id:runId,pain_id:g.painId,sourcing_query:g.query,ali_product_id:productId,warehouse_country:country,proof_url:result.proofUrl,verification_source:"aliexpress_explicit_ship_from_filter",title_hint:hints.titleHint,image_hint:hints.imageHint,verified_at:new Date().toISOString(),expires_at:new Date(Date.now()+24*3600_000).toISOString()});}}
     if(evidenceRows.length)await db("sf_eu_evidence?on_conflict=run_id,pain_id,sourcing_query,ali_product_id,warehouse_country",{method:"POST",headers:{prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(evidenceRows)});
-    const rowIds=[...verifiedProductIds].flatMap(pid=>g.rowIds.get(pid)||[]);
-    if(rowIds.length){await db(`sf_candidates?id=in.(${rowIds.join(",")})`,{method:"PATCH",body:JSON.stringify({stage:"eu_verified",updated_at:new Date().toISOString()})});verifiedCandidates+=rowIds.length;}
+    const rowIds=[...verifiedProductIds].flatMap(pid=>g.rowIds.get(pid)||[]);if(rowIds.length){await db(`sf_candidates?id=in.(${rowIds.join(",")})`,{method:"PATCH",body:JSON.stringify({stage:"eu_verified",updated_at:new Date().toISOString()})});verifiedCandidates+=rowIds.length;}
   }
-
-  const runRes=await db(`sf_sourcing_runs?select=stats&id=eq.${runId}&limit=1`); const runRows=await runRes.json();
-  const stats={...(runRows?.[0]?.stats||{}),eu_verify:{groups:groups.size,countries,requests,successful_requests:successfulRequests,proof_rows:proofs,verified_candidates:verifiedCandidates}};
-  await db(`sf_sourcing_runs?id=eq.${runId}`,{method:"PATCH",body:JSON.stringify({stats})});
-  return Response.json({ok:true,run_id:runId,stats:stats.eu_verify});
+  const runRes=await db(`sf_sourcing_runs?select=stats&id=eq.${runId}&limit=1`);const runRows=await runRes.json();const stats={...(runRows?.[0]?.stats||{}),eu_verify:{groups:groups.size,countries,requests,successful_requests:successfulRequests,proof_rows:proofs,verified_candidates:verifiedCandidates}};await db(`sf_sourcing_runs?id=eq.${runId}`,{method:"PATCH",body:JSON.stringify({stats})});return Response.json({ok:true,run_id:runId,stats:stats.eu_verify});
 });

@@ -1,0 +1,1 @@
+Template source reference for the UI foundation: web3templates/nextly-template (MIT). The site uses selected responsive layout patterns only; EU Solution Foundry branding, content, interactions and commerce intelligence remain project-specific.

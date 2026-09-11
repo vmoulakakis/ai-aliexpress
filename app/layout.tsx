@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./photo-design.css";
+import SolutionFirstRecovery from "./SolutionFirstRecovery";
 
 export const metadata: Metadata = {
   title: "Λύσεις ΕΕ — AI sourcing από αποθήκες Ευρώπης",
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="el">
-      <body>{children}</body>
+      <body>{children}<SolutionFirstRecovery /></body>
     </html>
   );
 }
